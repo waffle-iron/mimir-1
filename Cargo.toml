@@ -1,0 +1,9 @@
+[package]
+authors = ["Jason Ozias <jason.g.ozias@gmail.com>"]
+name = "oic"
+version = "0.1.0"
+
+[dependencies]
+
+[build-dependencies]
+bindgen = "0.23.1"
