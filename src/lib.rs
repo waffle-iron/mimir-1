@@ -10,9 +10,10 @@ mod macros;
 extern crate core;
 extern crate libc;
 
+mod context;
 mod error;
 mod ffi;
 mod odpi;
 
-pub use odpi::context::Context;
-pub use odpi::init::ODPICreateMode;
+pub use context::Context;
+pub use odpi::flags;

@@ -1,3 +1,6 @@
 //! `oic` ODPI-C wrappers.
-pub mod context;
-pub mod init;
+pub mod constants;
+pub mod externs;
+pub mod flags;
+pub mod opaque;
+pub mod structs;

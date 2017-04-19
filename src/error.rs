@@ -1,6 +1,7 @@
 //! `oci` errors
-use odpi::context::{self, Context};
+use context::Context;
 use ffi;
+use odpi::externs;
 use std::ffi::CStr;
 use std::slice;
 
@@ -83,7 +84,7 @@ impl Odpi {
     }
 }
 
-/// Create an `ErrorKind` error from an ODPIErrorInfo struct.
+/// Create an `ErrorKind` error from an `ODPIErrorInfo` struct.
 fn from_dpi_error_info(err: &ffi::ODPIErrorInfo) -> ErrorKind {
     let slice =
         unsafe { slice::from_raw_parts(err.message as *mut u8, err.messageLength as usize) };
@@ -110,10 +111,11 @@ fn from_dpi_error_info(err: &ffi::ODPIErrorInfo) -> ErrorKind {
     }
 }
 
+/// Create an `ErrorKind` from an ODPI-C error.
 pub fn from_dpi_context(ctxt: &Context) -> ErrorKind {
     let mut err: ffi::ODPIErrorInfo = Default::default();
     unsafe {
-        context::dpiContext_getError(ctxt.context(), &mut err);
+        externs::dpiContext_getError(ctxt.context(), &mut err);
     };
     from_dpi_error_info(&err)
 }

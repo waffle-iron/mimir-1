@@ -1,34 +1,38 @@
 //! FFI bindings to ODPI-C.
 #![allow(non_snake_case)]
-use libc::{c_char, c_int, c_uint};
+use libc::{c_char, c_int};
 use std::ptr;
-
-pub const DPI_MAJOR_VERSION: c_uint = 2;
-pub const DPI_MINOR_VERSION: c_uint = 0;
-pub const DPI_SUCCESS: c_int = 0;
-pub const DPI_FAILURE: c_int = -1;
-
-bitflags!{
-    flags AuthMode: u32 {
-        const DPI_MODE_AUTH_DEFAULT = 0b00000000,
-        const DPI_MODE_AUTH_SYSDBA  = 0b00000010,
-        const DPI_MODE_AUTH_SYSOPER = 0b00000100,
-        const DPI_MODE_AUTH_PRELIM  = 0b00001000,
-        const DPI_MODE_AUTH_SYSASM  = 0b1000000000000000,
-    }
-}
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
+/// This structure is used for transferring error information from ODPI-C. All of the strings
+/// referenced here may become invalid as soon as the next ODPI-C call is made.
 pub struct ODPIErrorInfo {
+    /// The OCI error code if an OCI error has taken place. If no OCI error has taken place the
+    /// value is 0.
     pub code: i32,
+    /// The parse error offset (in bytes) when executing a statement or the row offset when fetching
+    /// batch error information. If neither of these cases are true, the value is 0.
     pub offset: u16,
+    /// The error message as a byte string in the encoding specified by the dpiErrorInfo.encoding
+    /// member.
     pub message: *const c_char,
+    /// The length of the dpiErrorInfo.message member, in bytes.
     pub messageLength: u32,
+    /// The encoding in which the error message is encoded as a null-terminated string. For OCI
+    /// errors this is the CHAR encoding used when the connection was created. For ODPI-C specific
+    /// errors this is UTF-8.
     pub encoding: *const c_char,
+    /// The public ODPI-C function name which was called in which the error took place. This is a
+    /// null-terminated ASCII string.
     pub fnName: *const c_char,
+    /// The internal action that was being performed when the error took place. This is a
+    /// null-terminated ASCII string.
     pub action: *const c_char,
+    /// The SQLSTATE code associated with the error. This is a 5 character null-terminated string.
     pub sqlState: *const c_char,
+    /// A boolean value indicating if the error is recoverable. This member always has a value of 0
+    /// unless both client and server are at release 12.1 or higher.
     pub isRecoverable: c_int,
 }
 
@@ -50,12 +54,20 @@ impl Default for ODPIErrorInfo {
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
+/// This structure is used for returning Oracle version information about the Oracle Client.
 pub struct ODPIVersionInfo {
+    /// Specifies the major version of the Oracle Client or Database.
     pub version_num: c_int,
+    /// Specifies the release version of the Oracle Client or Database.
     pub release_num: c_int,
+    /// Specifies the update version of the Oracle Client or Database.
     pub update_num: c_int,
+    /// Specifies the port specific release version of the Oracle Client or Database.
     pub port_release_num: c_int,
+    /// Specifies the port specific update version of the Oracle Client or Database.
     pub port_update_num: c_int,
+    /// Specifies the full version (all five components) as a number that is suitable for
+    /// comparison with the result of the macro DPI_ORACLE_VERSION_TO_NUMBER.
     pub full_version_num: u32,
 }
 
@@ -71,30 +83,6 @@ impl Default for ODPIVersionInfo {
         }
     }
 }
-
-// impl Default for dpiConnCreateParams {
-//     fn default() -> dpiConnCreateParams {
-//         dpiConnCreateParams {
-//             authMode: DPI_MODE_AUTH_DEFAULT,
-//             connectionClass: ptr::null(),
-//             connectionClassLength: 0,
-//             purity: DPI_PURITY_DEFAULT,
-//             newPassword: ptr::null(),
-//             newPasswordLength: 0,
-//             appContext: ptr::null_mut(),
-//             numAppContext: 0,
-//             externalAuth: 0,
-//             externalHandle: ptr::null_mut(),
-//             pool: ptr::null_mut(),
-//             tag: ptr::null(),
-//             tagLength: 0,
-//             matchAnyTag: 0,
-//             outTag: ptr::null(),
-//             outTagLength: 0,
-//             outTagFound: 0,
-//         }
-//     }
-// }
 //
 // impl Default for dpiPoolCreateParams {
 //     fn default() -> dpiPoolCreateParams {
