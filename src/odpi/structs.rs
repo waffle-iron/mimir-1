@@ -1,16 +1,33 @@
 //! ODPI-C Public Structs.
+use ffi;
 use libc::{c_char, c_int, c_void};
-use odpi::{flags, opaque};
-use std::ptr;
+use odpi::{externs, flags, opaque};
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
+/// This structure is used for passing application context to the database during the process of
+/// creating standalone connections. These values are ignored when acquiring a connection from a
+/// session pool or when using DRCP (Database Resident Connection Pooling). All values must be set
+/// to valid values prior to being used in the `ODPIConnCreateParams` structure and must remain
+/// valid until the execution of `dpiConn_create()` completes. Values set using this structure are
+/// available in logon triggers by using the `sys_context()` SQL function.
 pub struct ODPIAppContext {
+    /// Specifies the value of the "namespace" parameter to sys_context(). It is expected to be a
+    /// byte string in the encoding specified in the dpiConnCreateParams structure and must not be
+    /// NULL.
     pub namespace_name: *const c_char,
+    /// Specifies the length of the dpiAppContext.namespaceName member, in bytes.
     pub namespace_name_length: u32,
+    /// Specifies the value of the "parameter" parameter to sys_context(). It is expected to be a
+    /// byte string in the encoding specified in the dpiConnCreateParams structure and must not be
+    /// NULL.
     pub name: *const c_char,
+    /// Specifies the length of the dpiAppContext.name member, in bytes.
     pub name_length: u32,
+    /// Specifies the value that will be returned from sys_context(). It is expected to be a byte
+    /// string in the encoding specified in the dpiConnCreateParams structure and must not be NULL.
     pub value: *const c_char,
+    /// Specifies the length of the dpiAppContext.value member, in bytes.
     pub value_length: u32,
 }
 
@@ -43,20 +60,6 @@ pub struct ODPICommonCreateParams {
     /// Specifies the length of the dpiCommonCreateParams.driverName member, in bytes. The default
     /// value is 0.
     pub driver_name_length: u32,
-}
-
-impl Default for ODPICommonCreateParams {
-    fn default() -> ODPICommonCreateParams {
-        ODPICommonCreateParams {
-            create_mode: flags::DPI_MODE_CREATE_DEFAULT,
-            encoding: ptr::null(),
-            nchar_encoding: ptr::null(),
-            edition: ptr::null(),
-            edition_length: 0,
-            driver_name: ptr::null(),
-            driver_name_length: 0,
-        }
-    }
 }
 
 #[repr(C)]
@@ -140,30 +143,6 @@ pub struct ODPIConnCreateParams {
     pub out_tag_found: c_int,
 }
 
-impl Default for ODPIConnCreateParams {
-    fn default() -> ODPIConnCreateParams {
-        ODPIConnCreateParams {
-            auth_mode: flags::DPI_MODE_AUTH_DEFAULT,
-            connection_class: ptr::null(),
-            connection_class_length: 0,
-            purity: flags::DPI_PURITY_DEFAULT,
-            new_password: ptr::null(),
-            new_password_length: 0,
-            app_context: ptr::null_mut(),
-            num_app_context: 0,
-            external_auth: 0,
-            external_handle: ptr::null_mut(),
-            pool: ptr::null_mut(),
-            tag: ptr::null(),
-            tag_length: 0,
-            match_any_tag: 0,
-            out_tag: ptr::null(),
-            out_tag_length: 0,
-            out_tag_found: 0,
-        }
-    }
-}
-
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
 /// This structure is used for creating session pools, which can in turn be used to create
@@ -215,19 +194,126 @@ pub struct ODPIPoolCreateParams {
     pub out_pool_name_length: u32,
 }
 
-impl Default for ODPIPoolCreateParams {
-    fn default() -> ODPIPoolCreateParams {
-        ODPIPoolCreateParams {
-            min_sessions: 1,
-            max_sessions: 1,
-            session_increment: 0,
-            ping_interval: 0,
-            ping_timeout: 0,
-            homogeneous: 1,
-            external_auth: 0,
-            get_mode: flags::DPI_MODE_POOL_GET_WAIT,
-            out_pool_name: ptr::null(),
-            out_pool_name_length: 0,
-        }
-    }
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
+/// This structure is used for creating subscriptions to messages sent for object change
+/// notification, query change notification or advanced queuing.
+pub struct ODPISubscrCreateParams {
+    /// Specifies the namespace in which the subscription is created. It is expected to be one of
+    /// the values from the enumeration `ODPISubscrNamespace`. The default value is
+    /// DPI_SUBSCR_NAMESPACE_DBCHANGE.
+    pub subscr_namespace: flags::ODPISubscrNamespace,
+    /// Specifies the protocol used for sending notifications for the subscription. It is expected
+    /// to be one of the values from the enumeration `ODPISubscrProtocol`. The default value is
+    /// DPI_SUBSCR_PROTO_CALLBACK.
+    pub protocol: flags::ODPISubscrProtocol,
+    /// Specifies the quality of service flags to use with the subscription. It is expected to be
+    /// one or more of the values from the enumeration `ODPISubscrQOS`, OR'ed together. The default
+    /// value is to have no flags set.
+    pub qos: flags::ODPISubscrQOS,
+    /// Specifies which operations on the registered tables or queries should result in
+    /// notifications. It is expected to be one or more of the values from the enumeration
+    /// `ODPIOpCode`, OR'ed together. The default value is DPI_OPCODE_ALL_OPS.
+    pub operations: flags::ODPIOpCode,
+    /// Specifies the port number on which to receive notifications. The default value is 0, which
+    /// means that a port number will be selected by the Oracle client.
+    pub port_number: u32,
+    /// Specifies the length of time, in seconds, before the subscription is unregistered. If the
+    /// value is 0, the subscription remains active until explicitly unregistered. The default value
+    /// is 0.
+    pub timeout: u32,
+    /// Specifies the name of the subscription, as a byte string in the encoding used for CHAR data.
+    /// This name must be consistent with the namespace identified in the
+    /// dpiSubscrCreateParams.subscrNamespace member. The default value is NULL.
+    pub name: *const c_char,
+    /// Specifies the length of the dpiSubscrCreateParams.name member, in bytes. The default value
+    /// is 0.
+    pub name_length: u32,
+    /// Specifies the callback that will be called when a notification is sent to the subscription,
+    /// if the dpiSubscrCreateParams.protocol member is set to DPI_SUBSCR_PROTO_CALLBACK. The
+    /// callback accepts the following arguments:
+    ///
+    /// * context -- the value of the dpiSubscrCreateParams.callbackContext member.
+    /// * message -- a pointer to the message that is being sent. The message is in the form
+    ///                `ODPISubscrMessage`.
+    ///
+    /// The default value is NULL. If a callback is specified and a notification is sent, this will
+    /// be performed on a separate thread. If database operations are going to take place, ensure
+    /// that the create mode DPI_MODE_CREATE_THREADED is set in the structure dpiCommonCreateParams
+    /// when creating the session pool or standalone connection that will be used in this callback.
+    pub callback: externs::ODPISubscrCallback,
+    /// Specifies the value that will be used as the first argument to the callback specified in the
+    /// dpiSubscrCreateParams.callback member. The default value is NULL.
+    pub callback_context: *mut c_void,
+    /// Specifies the name of the recipient to which notifications are sent when the
+    /// dpiSubscrCreateParams.protocol member is not set to DPI_SUBSCR_PROTO_CALLBACK. The value is
+    /// expected to be a byte string in the encoding used for CHAR data. The default value is NULL.
+    pub recipient_name: *const c_char,
+    /// Specifies the length of the dpiSubscrCreateParams.recipientName member, in bytes. The
+    /// default value is 0.
+    pub recipient_name_length: u32,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
+/// This structure is used for passing messages sent by notifications to subscriptions. It is the
+/// second parameter to the callback method specified in the `ODPISubscrCreateParams` structure.
+pub struct ODPISubscrMessage {
+    /// Specifies the type of event that took place which generated the notification. It will be one
+    /// of the values from the enumeration `ODPIEventType`.
+    pub event_type: flags::ODPIEventType,
+    /// Specifies the name of the database which generated the notification, as a byte string in the
+    /// encoding used for CHAR data.
+    pub db_name: *const c_char,
+    /// Specifies the length of the dpiSubscrMessage.dbName member, in bytes.
+    pub db_name_length: u32,
+    /// Specifies a pointer to an array of `ODPISubscrMessageTable` structures representing the list
+    /// of tables that were modified and generated this notification. This value will be NULL if the
+    /// value of the dpiSubscrMessage.eventType member is not equal to DPI_EVENT_OBJCHANGE.
+    pub tables: *mut ODPISubscrMessageTable,
+    /// Specifies the number of structures available in the dpiSubscrMessage.tables member.
+    pub num_tables: u32,
+    /// Specifies a pointer to an array of dpiSubscrMessageQuery structures representing the list of
+    /// queries that were modified and generated this notification. This value will be NULL if the
+    /// value of the dpiSubscrMessage.eventType member is not equal to DPI_EVENT_QUERYCHANGE.
+    // pub queries: *mut dpiSubscrMessageQuery,
+    /// Specifies the number of structures available in the dpiSubscrMessage.queries member.
+    pub num_queries: u32,
+    /// Specifies a pointer to a dpiErrorInfo structure. This value will be NULL if no error has
+    /// taken place. If this value is not NULL the other members in this structure may not contain
+    /// valid values.
+    pub error_info: *mut ffi::ODPIErrorInfo,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
+/// This structure is used for passing information on the rows that were changed and resulted in the
+/// notification message of which this structure is a part.
+pub struct ODPISubscrMessageRow {
+    /// Specifies the operations that took place on the registered query. It will be one or more of
+    /// the values from the enumeration `ODPIOpCode`, OR'ed together.
+    pub operation: flags::ODPIOpCode,
+    /// Specifies the rowid of the row that was changed, in the encoding used for CHAR data.
+    pub rowid: *const c_char,
+    /// Specifies the length of the dpiSubscrMessageRow.rowid member, in bytes.
+    pub rowid_length: u32,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
+/// This structure is used for passing information on the tables that were changed and resulted in
+/// the notification message of which this structure is a part.
+pub struct ODPISubscrMessageTable {
+    /// Specifies the operations that took place on the modified table. It will be one or more of
+    /// the values from the enumeration `ODPIOpCode`, OR'ed together.
+    pub operation: flags::ODPIOpCode,
+    /// Specifies the name of the table that was changed, in the encoding used for CHAR data.
+    pub name: *const c_char,
+    /// Specifies the length of the dpiSubscrMessageRow.name member, in bytes.
+    pub name_length: u32,
+    /// Specifies a pointer to an array of `ODPISubscrMessageRow` structures representing the list
+    /// of rows that were modified by the event which generated this notification.
+    pub rows: *mut ODPISubscrMessageRow,
+    /// Specifies the number of structures available in the dpiSubscrMessageTable.rows member.
+    pub num_rows: u32,
 }

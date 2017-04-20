@@ -83,22 +83,3 @@ impl Default for ODPIVersionInfo {
         }
     }
 }
-
-// impl Default for dpiSubscrCreateParams {
-//     fn default() -> dpiSubscrCreateParams {
-//         dpiSubscrCreateParams {
-//             subscrNamespace: DPI_SUBSCR_NAMESPACE_DBCHANGE,
-//             protocol: DPI_SUBSCR_PROTO_CALLBACK,
-//             qos: DPI_SUBSCR_QOS_RELIABLE,
-//             operations: DPI_OPCODE_ALL_OPS,
-//             portNumber: 0,
-//             timeout: 0,
-//             name: ptr::null(),
-//             nameLength: 0,
-//             callback: None,
-//             callbackContext: ptr::null_mut(),
-//             recipientName: ptr::null(),
-//             recipientNameLength: 0,
-//         }
-//     }
-// }

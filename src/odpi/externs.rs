@@ -1,7 +1,12 @@
 //! ODPI-C externs
 use ffi;
-use libc::{c_int, c_uint};
+use libc::{c_int, c_uint, c_void};
 use odpi::{opaque, structs};
+
+/// The optional function pointer use in the `ODPISubscrCreateParams` struct.
+pub type ODPISubscrCallback =
+    Option<unsafe extern "C" fn(context: *mut c_void,
+                                message: *mut structs::ODPISubscrMessage)>;
 
 extern "C" {
     pub fn dpiContext_create(majorVersion: c_uint,
@@ -24,4 +29,7 @@ extern "C" {
     pub fn dpiContext_initPoolCreateParams(context: *const opaque::ODPIContext,
                                            params: *mut structs::ODPIPoolCreateParams)
                                            -> c_int;
+    pub fn dpiContext_initSubscrCreateParams(context: *const opaque::ODPIContext,
+                                             params: *mut structs::ODPISubscrCreateParams)
+                                             -> c_int;
 }

@@ -5,6 +5,7 @@ use odpi::{constants, flags, externs, opaque, structs};
 use std::{env, ptr};
 use std::ffi::CString;
 use std::io::{self, Write};
+use std::mem;
 
 /// ODPI-C Context Wrapper.
 pub struct Context {
@@ -13,9 +14,14 @@ pub struct Context {
     /// This structure is used for creating session pools and standalone connections to the
     /// database.
     common_create_params: structs::ODPICommonCreateParams,
+    /// This structure is used for creating connections to the database, whether standalone or
+    /// acquired from a session pool.
     conn_create_params: structs::ODPIConnCreateParams,
+    /// This structure is used for creating session pools, which can in turn be used to create
+    /// connections that are acquired from that session pool.
     pool_create_params: structs::ODPIPoolCreateParams,
-    // pub subscr_create_params: ffi::dpiSubscrCreateParams,
+    /// This enumeration identifies the namespaces supported by subscriptions.
+    subscr_create_params: structs::ODPISubscrCreateParams,
 }
 
 impl Context {
@@ -29,31 +35,32 @@ impl Context {
                                           &mut ctxt,
                                           &mut err)
            } == constants::DPI_SUCCESS {
-            let mut common_cp: structs::ODPICommonCreateParams = Default::default();
-            let mut conn_cp: structs::ODPIConnCreateParams = Default::default();
-            let mut pool_cp: structs::ODPIPoolCreateParams = Default::default();
-            // let mut subscr_create_params: ffi::dpiSubscrCreateParams = Default::default();
             unsafe {
+                let mut common_cp: structs::ODPICommonCreateParams = mem::uninitialized();
+                let mut conn_cp: structs::ODPIConnCreateParams = mem::uninitialized();
+                let mut pool_cp: structs::ODPIPoolCreateParams = mem::uninitialized();
+                let mut subscr_cp: structs::ODPISubscrCreateParams = mem::uninitialized();
                 externs::dpiContext_initCommonCreateParams(ctxt, &mut common_cp);
                 externs::dpiContext_initConnCreateParams(ctxt, &mut conn_cp);
                 externs::dpiContext_initPoolCreateParams(ctxt, &mut pool_cp);
-                // ffi::dpiContext_initSubscrCreateParams(ctxt, &mut subscr_create_params);
+                externs::dpiContext_initSubscrCreateParams(ctxt, &mut subscr_cp);
+
+                let driver_name = format!("Rust Oracle: {}", env::var("CARGO_PKG_VERSION")?);
+                #[cfg_attr(feature = "cargo-clippy", allow(cast_possible_truncation))]
+                let driver_name_len = driver_name.len() as u32;
+                let driver_name_cstr = CString::new(driver_name)?.as_ptr();
+
+                common_cp.driver_name = driver_name_cstr;
+                common_cp.driver_name_length = driver_name_len;
+
+                Ok(Context {
+                       context: ctxt,
+                       common_create_params: common_cp,
+                       conn_create_params: conn_cp,
+                       pool_create_params: pool_cp,
+                       subscr_create_params: subscr_cp,
+                   })
             }
-            let driver_name = format!("Rust Oracle: {}", env::var("CARGO_PKG_VERSION")?);
-            #[cfg_attr(feature = "cargo-clippy", allow(cast_possible_truncation))]
-            let driver_name_len = driver_name.len() as u32;
-            let driver_name_cstr = CString::new(driver_name)?.as_ptr();
-
-            common_cp.driver_name = driver_name_cstr;
-            common_cp.driver_name_length = driver_name_len;
-
-            Ok(Context {
-                   context: ctxt,
-                   common_create_params: common_cp,
-                   conn_create_params: conn_cp,
-                   pool_create_params: pool_cp,
-                //    subscr_create_params: subscr_create_params,
-               })
         } else {
             Err(ErrorKind::ContextCreateFailed.into())
         }
@@ -62,6 +69,11 @@ impl Context {
     /// Get the `context` value.
     pub fn context(&self) -> *mut opaque::ODPIContext {
         self.context
+    }
+
+    /// Get the `create_mode` value.
+    pub fn create_mode(&self) -> flags::ODPICreateMode {
+        self.common_create_params.create_mode
     }
 
     /// Set the `encoding`.
@@ -98,6 +110,11 @@ impl Context {
         self
     }
 
+    /// Get the `auth_mode` value.
+    pub fn auth_mode(&self) -> flags::ODPIAuthMode {
+        self.conn_create_params.auth_mode
+    }
+
     /// Set the `auth_mode`
     ///
     /// Specifies the mode used for authorizing connections. It is expected to be one or more of the
@@ -115,6 +132,16 @@ impl Context {
     /// 1.
     pub fn set_min_sessions(&mut self, min_sessions: u32) -> &mut Context {
         self.pool_create_params.min_sessions = min_sessions;
+        self
+    }
+
+
+    /// Set the `port_number`
+    ///
+    /// Specifies the port number on which to receive notifications. The default value is 0, which
+    /// means that a port number will be selected by the Oracle client.
+    pub fn set_port_number(&mut self, port_number: u32) -> &mut Context {
+        self.subscr_create_params.port_number = port_number;
         self
     }
 
@@ -158,8 +185,11 @@ mod test {
     fn context() {
         match Context::new() {
             Ok(mut ctxt) => {
+                assert!(ctxt.auth_mode() == flags::DPI_MODE_AUTH_DEFAULT);
                 ctxt.set_encoding("UTF-8");
                 ctxt.set_auth_mode(flags::DPI_MODE_AUTH_DEFAULT | flags::DPI_MODE_AUTH_SYSDBA);
+                let create_mode = ctxt.create_mode();
+                assert!(create_mode == flags::DPI_MODE_CREATE_DEFAULT);
             }
             Err(_e) => assert!(false),
         }
