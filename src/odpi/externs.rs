@@ -23,5 +23,5 @@ extern "C" {
                                            -> c_int;
     pub fn dpiContext_initPoolCreateParams(context: *const opaque::ODPIContext,
                                            params: *mut structs::ODPIPoolCreateParams)
-     -> c_int;
+                                           -> c_int;
 }
