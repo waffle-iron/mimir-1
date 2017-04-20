@@ -53,6 +53,7 @@ impl Context {
                 let driver_name_len = driver_name.len() as u32;
                 let driver_name_cstr = CString::new(driver_name)?.as_ptr();
 
+                common_cp.create_mode |= flags::DPI_MODE_CREATE_THREADED;
                 common_cp.driver_name = driver_name_cstr;
                 common_cp.driver_name_length = driver_name_len;
 
@@ -72,6 +73,16 @@ impl Context {
     /// Get the `context` value.
     pub fn context(&self) -> *mut opaque::ODPIContext {
         self.context
+    }
+
+    /// Get the `common_create_params` value.
+    pub fn common_create_params(&self) -> structs::ODPICommonCreateParams {
+        self.common_create_params
+    }
+
+    /// Get the `conn_create_params` value.
+    pub fn conn_create_params(&self) -> structs::ODPIConnCreateParams {
+        self.conn_create_params
     }
 
     /// Get the `create_mode` value.

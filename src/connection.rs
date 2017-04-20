@@ -44,6 +44,8 @@ impl Connection {
                                               connect_string_len,
                                               ptr::null(),
                                               ptr::null_mut(),
+                                              //   &context.common_create_params(),
+                                              //   &mut context.conn_create_params(),
                                               &mut conn);
 
             if res == DPI_SUCCESS {
@@ -83,7 +85,9 @@ mod test {
     #[test]
     fn connect() {
         match Context::new() {
-            Ok(ref ctxt) => {
+            Ok(ref mut ctxt) => {
+                ctxt.set_encoding("UTF-8");
+                ctxt.set_nchar_encoding("UTF-8");
                 match Connection::connect(ctxt,
                                           Some("bvprod"),
                                           Some("veritiv001"),

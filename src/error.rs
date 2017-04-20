@@ -2,6 +2,7 @@
 use context::Context;
 use odpi::{externs, structs};
 use std::ffi::CStr;
+use std::fmt;
 use std::mem;
 use std::slice;
 
@@ -84,6 +85,19 @@ impl Odpi {
     }
 }
 
+impl fmt::Display for Odpi {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f,
+                 "{}: {} {} {} {} {}",
+                 self.code,
+                 self.message,
+                 self.fn_name,
+                 self.action,
+                 self.sql_state,
+                 self.recoverable)
+    }
+}
+
 /// Create an `ErrorKind` error from an `ODPIErrorInfo` struct.
 fn from_dpi_error_info(err: &structs::ODPIErrorInfo) -> ErrorKind {
     let slice =
@@ -136,12 +150,12 @@ error_chain! {
             display("Failed to create the ODPI-C context!")
         }
         DpiError(err: Odpi) {
-            description("Unable to determine the interface!")
-            display("Unable to determine the interface!")
+            description("ODPI-C Error")
+            display("ODPI-C Error! {}", err)
         }
         OciError(err: Odpi) {
-            description("Unable to determine the interface!")
-            display("Unable to determine the interface!")
+            description("OCI Error!")
+            display("OCI Error! {}", err)
         }
     }
 }
