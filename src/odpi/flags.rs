@@ -17,6 +17,20 @@ bitflags! {
     }
 }
 
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+/// This enumeration identifies the mode to use when closing connections to the database.
+pub enum ODPIConnCloseMode {
+    /// Default value used when closing connections.
+    DefultClose = 0,
+    /// Causes the session to be dropped from the session pool instead of simply returned to the
+    /// pool for future use.
+    DropSession = 1,
+    /// Causes the session to be tagged with the tag information given when the connection is
+    /// closed. A value of NULL for the tag will cause the tag to be cleared.
+    ReTag = 2,
+}
+
 bitflags! {
     #[repr(C)]
     /// This enumeration identifies the mode to use when creating connections to the database. Note

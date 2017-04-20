@@ -1,8 +1,8 @@
 //! `oci` errors
 use context::Context;
-use ffi;
-use odpi::externs;
+use odpi::{externs, structs};
 use std::ffi::CStr;
+use std::mem;
 use std::slice;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -85,16 +85,16 @@ impl Odpi {
 }
 
 /// Create an `ErrorKind` error from an `ODPIErrorInfo` struct.
-fn from_dpi_error_info(err: &ffi::ODPIErrorInfo) -> ErrorKind {
+fn from_dpi_error_info(err: &structs::ODPIErrorInfo) -> ErrorKind {
     let slice =
-        unsafe { slice::from_raw_parts(err.message as *mut u8, err.messageLength as usize) };
-    let fn_name = unsafe { CStr::from_ptr(err.fnName) }
+        unsafe { slice::from_raw_parts(err.message as *mut u8, err.message_length as usize) };
+    let fn_name = unsafe { CStr::from_ptr(err.fn_name) }
         .to_string_lossy()
         .into_owned();
     let action = unsafe { CStr::from_ptr(err.action) }
         .to_string_lossy()
         .into_owned();
-    let sql_state = unsafe { CStr::from_ptr(err.sqlState) }
+    let sql_state = unsafe { CStr::from_ptr(err.sql_state) }
         .to_string_lossy()
         .into_owned();
     let err = Odpi::new(err.code,
@@ -103,7 +103,7 @@ fn from_dpi_error_info(err: &ffi::ODPIErrorInfo) -> ErrorKind {
                         fn_name,
                         action,
                         sql_state,
-                        err.isRecoverable.is_positive());
+                        err.is_recoverable.is_positive());
     if err.message().starts_with("DPI") {
         ErrorKind::DpiError(err)
     } else {
@@ -113,11 +113,11 @@ fn from_dpi_error_info(err: &ffi::ODPIErrorInfo) -> ErrorKind {
 
 /// Create an `ErrorKind` from an ODPI-C error.
 pub fn from_dpi_context(ctxt: &Context) -> ErrorKind {
-    let mut err: ffi::ODPIErrorInfo = Default::default();
     unsafe {
+        let mut err = mem::uninitialized::<structs::ODPIErrorInfo>();
         externs::dpiContext_getError(ctxt.context(), &mut err);
-    };
-    from_dpi_error_info(&err)
+        from_dpi_error_info(&err)
+    }
 }
 
 error_chain! {
@@ -127,6 +127,10 @@ error_chain! {
     }
 
     errors {
+        ConnClose {
+            description("Failed to close the connection!")
+            display("Failed to close the connection!")
+        }
         ContextCreateFailed {
             description("Failed to create the ODPI-C context!")
             display("Failed to create the ODPI-C context!")

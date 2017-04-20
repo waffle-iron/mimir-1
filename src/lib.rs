@@ -10,10 +10,11 @@ mod macros;
 extern crate core;
 extern crate libc;
 
+pub mod connection;
 mod context;
 mod error;
-mod ffi;
 mod odpi;
+pub mod version;
 
 pub use context::Context;
 pub use odpi::flags;

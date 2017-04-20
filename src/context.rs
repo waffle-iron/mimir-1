@@ -1,6 +1,5 @@
 //! `oic` ODPI-C Context
 use error::{ErrorKind, Result};
-use ffi;
 use odpi::{constants, flags, externs, opaque, structs};
 use std::{env, ptr};
 use std::ffi::CString;
@@ -27,24 +26,28 @@ pub struct Context {
 impl Context {
     /// Create a new `Context` struct.
     pub fn new() -> Result<Context> {
-        let mut err: ffi::ODPIErrorInfo = Default::default();
         let mut ctxt = ptr::null_mut();
         if unsafe {
+               let mut err = mem::uninitialized::<structs::ODPIErrorInfo>();
                externs::dpiContext_create(constants::DPI_MAJOR_VERSION,
                                           constants::DPI_MINOR_VERSION,
                                           &mut ctxt,
                                           &mut err)
            } == constants::DPI_SUCCESS {
             unsafe {
+                /// Setup references for the param structs.
                 let mut common_cp: structs::ODPICommonCreateParams = mem::uninitialized();
                 let mut conn_cp: structs::ODPIConnCreateParams = mem::uninitialized();
                 let mut pool_cp: structs::ODPIPoolCreateParams = mem::uninitialized();
                 let mut subscr_cp: structs::ODPISubscrCreateParams = mem::uninitialized();
+
+                /// Initialize the structs with the default values.
                 externs::dpiContext_initCommonCreateParams(ctxt, &mut common_cp);
                 externs::dpiContext_initConnCreateParams(ctxt, &mut conn_cp);
                 externs::dpiContext_initPoolCreateParams(ctxt, &mut pool_cp);
                 externs::dpiContext_initSubscrCreateParams(ctxt, &mut subscr_cp);
 
+                /// Add the driver name to the Common Create Params struct.
                 let driver_name = format!("Rust Oracle: {}", env::var("CARGO_PKG_VERSION")?);
                 #[cfg_attr(feature = "cargo-clippy", allow(cast_possible_truncation))]
                 let driver_name_len = driver_name.len() as u32;
@@ -144,27 +147,6 @@ impl Context {
         self.subscr_create_params.port_number = port_number;
         self
     }
-
-    /// Get the ODPI-C Version Information.
-    pub fn version(&self) -> Result<String> {
-        let mut version_info: ffi::ODPIVersionInfo = Default::default();
-        try_dpi!(self,
-                 externs::dpiContext_getClientVersion(self.context, &mut version_info));
-        Ok(format!("{}.{}.{}.{}.{}",
-                   version_info.version_num,
-                   version_info.release_num,
-                   version_info.update_num,
-                   version_info.port_release_num,
-                   version_info.port_update_num))
-    }
-
-    /// Get the ODPI-C Version Number.
-    pub fn version_num(&self) -> Result<u32> {
-        let mut version_info: ffi::ODPIVersionInfo = Default::default();
-        try_dpi!(self,
-                 externs::dpiContext_getClientVersion(self.context, &mut version_info));
-        Ok(version_info.full_version_num)
-    }
 }
 
 impl Drop for Context {
@@ -190,37 +172,6 @@ mod test {
                 ctxt.set_auth_mode(flags::DPI_MODE_AUTH_DEFAULT | flags::DPI_MODE_AUTH_SYSDBA);
                 let create_mode = ctxt.create_mode();
                 assert!(create_mode == flags::DPI_MODE_CREATE_DEFAULT);
-            }
-            Err(_e) => assert!(false),
-        }
-    }
-
-    #[test]
-    fn version() {
-        match Context::new() {
-            Ok(ctxt) => {
-                match ctxt.version() {
-                    Ok(version) => {
-                        assert!(version == "12.2.0.1.0");
-                    }
-                    Err(_e) => assert!(false),
-                }
-            }
-            Err(_e) => assert!(false),
-        }
-    }
-
-    #[test]
-    fn version_num() {
-        match Context::new() {
-            Ok(ctxt) => {
-                match ctxt.version_num() {
-                    Ok(version_num) => {
-                        println!("{}", version_num);
-                        assert!(version_num == 1202000100);
-                    }
-                    Err(_e) => assert!(false),
-                }
             }
             Err(_e) => assert!(false),
         }

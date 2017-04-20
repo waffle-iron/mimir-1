@@ -1,7 +1,6 @@
 //! ODPI-C externs
-use ffi;
-use libc::{c_int, c_uint, c_void};
-use odpi::{opaque, structs};
+use libc::{c_char, c_int, c_uint, c_void};
+use odpi::{flags, opaque, structs};
 
 /// The optional function pointer use in the `ODPISubscrCreateParams` struct.
 pub type ODPISubscrCallback =
@@ -12,13 +11,13 @@ extern "C" {
     pub fn dpiContext_create(majorVersion: c_uint,
                              minorVersion: c_uint,
                              context: *mut *mut opaque::ODPIContext,
-                             errorInfo: *mut ffi::ODPIErrorInfo)
+                             errorInfo: *mut structs::ODPIErrorInfo)
                              -> c_int;
     pub fn dpiContext_destroy(context: *mut opaque::ODPIContext) -> c_int;
     pub fn dpiContext_getError(context: *const opaque::ODPIContext,
-                               errorInfo: *mut ffi::ODPIErrorInfo);
+                               errorInfo: *mut structs::ODPIErrorInfo);
     pub fn dpiContext_getClientVersion(context: *const opaque::ODPIContext,
-                                       versionInfo: *mut ffi::ODPIVersionInfo)
+                                       versionInfo: *mut structs::ODPIVersionInfo)
                                        -> c_int;
     pub fn dpiContext_initCommonCreateParams(context: *const opaque::ODPIContext,
                                              params: *mut structs::ODPICommonCreateParams)
@@ -32,4 +31,23 @@ extern "C" {
     pub fn dpiContext_initSubscrCreateParams(context: *const opaque::ODPIContext,
                                              params: *mut structs::ODPISubscrCreateParams)
                                              -> c_int;
+}
+
+extern "C" {
+    pub fn dpiConn_create(context: *const opaque::ODPIContext,
+                          userName: *const c_char,
+                          userNameLength: u32,
+                          password: *const c_char,
+                          passwordLength: u32,
+                          connectString: *const c_char,
+                          connectStringLength: u32,
+                          commonParams: *const structs::ODPICommonCreateParams,
+                          createParams: *mut structs::ODPIConnCreateParams,
+                          conn: *mut *mut opaque::ODPIConn)
+                          -> c_int;
+    pub fn dpiConn_close(conn: *mut opaque::ODPIConn,
+                         mode: flags::ODPIConnCloseMode,
+                         tag: *const c_char,
+                         tagLength: u32)
+                         -> c_int;
 }
