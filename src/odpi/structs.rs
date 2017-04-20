@@ -163,3 +163,71 @@ impl Default for ODPIConnCreateParams {
         }
     }
 }
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
+/// This structure is used for creating session pools, which can in turn be used to create
+/// connections that are acquired from that session pool.
+pub struct ODPIPoolCreateParams {
+    /// Specifies the minimum number of sessions to be created by the session pool. This value is
+    /// ignored if the dpiPoolCreateParams.homogeneous member has a value of 0. The default value
+    /// is 1.
+    pub min_sessions: u32,
+    /// Specifies the maximum number of sessions that can be created by the session pool. Values of
+    /// 1 and higher are acceptable. The default value is 1.
+    pub max_sessions: u32,
+    /// Specifies the number of sessions that will be created by the session pool when more sessions
+    /// are required and the number of sessions is less than the maximum allowed. This value is
+    /// ignored if the dpiPoolCreateParams.homogeneous member has a value of 0. This value added to
+    /// the dpiPoolCreateParams.minSessions member value must not exceed the
+    /// dpiPoolCreateParams.maxSessions member value. The default value is 0.
+    pub session_increment: u32,
+    /// Specifies the number of seconds since a connection has last been used before a ping will be
+    /// performed to verify that the connection is still valid. A negative value disables this
+    /// check. The default value is 60. This value is ignored in clients 12.2 and later since a much
+    /// faster internal check is done by the Oracle client.
+    pub ping_interval: c_int,
+    /// Specifies the number of milliseconds to wait when performing a ping to verify the connection
+    /// is still valid before the connection is considered invalid and is dropped. The default value
+    /// is 5000 (5 seconds). This value is ignored in clients 12.2 and later since a much faster
+    /// internal check is done by the Oracle client.
+    pub ping_timeout: c_int,
+    /// Specifies whether the pool is homogeneous or not. In a homogeneous pool all connections use
+    /// the same credentials whereas in a heterogeneous pool other credentials are permitted. The
+    /// default value is 1.
+    pub homogeneous: c_int,
+    /// Specifies whether external authentication should be used to create the sessions in the pool.
+    /// If this value is 0, the user name and password values must be specified in the call to
+    /// dpiPool_create(); otherwise, the user name and password values must be zero length or NULL.
+    /// The default value is 0.
+    pub external_auth: c_int,
+    /// Specifies the mode to use when sessions are acquired from the pool. It is expected to be one
+    /// of the values from the enumeration `ODPIGetPoolMode`. The default value is
+    /// DPI_MODE_POOL_GET_NOWAIT
+    pub get_mode: flags::ODPIPoolGetMode,
+    /// This member is populated upon successful creation of a pool using the function
+    /// dpiPool_create(). It is a byte string in the encoding used for CHAR data. Any value
+    /// specified prior to creating the session pool is ignored.
+    pub out_pool_name: *const c_char,
+    /// This member is populated upon successful creation of a pool using the function
+    /// dpiPool_create(). It is the length of the dpiPoolCreateParams.outPoolName member, in bytes.
+    /// Any value specified prior to creating the session pool is ignored.
+    pub out_pool_name_length: u32,
+}
+
+impl Default for ODPIPoolCreateParams {
+    fn default() -> ODPIPoolCreateParams {
+        ODPIPoolCreateParams {
+            min_sessions: 1,
+            max_sessions: 1,
+            session_increment: 0,
+            ping_interval: 0,
+            ping_timeout: 0,
+            homogeneous: 1,
+            external_auth: 0,
+            get_mode: flags::DPI_MODE_POOL_GET_WAIT,
+            out_pool_name: ptr::null(),
+            out_pool_name_length: 0,
+        }
+    }
+}

@@ -37,6 +37,22 @@ bitflags!{
 
 bitflags!{
     #[repr(C)]
+    /// This enumeration identifies the mode to use when getting sessions from a session pool.
+    pub flags ODPIPoolGetMode: u32 {
+        /// Specifies that the caller should block until a session is available from the pool.
+        const DPI_MODE_POOL_GET_WAIT     = 0b00000000,
+        /// Specifies that the caller should return immediately, regardless of whether a session is
+        /// available in the pool. If a session is not available an error is returned.
+        const DPI_MODE_POOL_GET_NOWAIT   = 0b00000001,
+        /// Specifies that a new session should be created if all of the sessions in the pool are
+        /// busy, even if this exceeds the maximum sessions allowable for the session pool (see
+        /// `dpiPoolCreateParams.maxSessions`)
+        const DPI_MODE_POOL_GET_FORCEGET = 0b00000010,
+    }
+}
+
+bitflags!{
+    #[repr(C)]
     /// This enumeration identifies the purity of the sessions that are acquired when using
     /// connection classes during connection creation.
     pub flags ODPIPurity: u32 {

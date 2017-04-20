@@ -14,7 +14,7 @@ pub struct Context {
     /// database.
     common_create_params: structs::ODPICommonCreateParams,
     conn_create_params: structs::ODPIConnCreateParams,
-    // pub pool_create_params: ffi::dpiPoolCreateParams,
+    pool_create_params: structs::ODPIPoolCreateParams,
     // pub subscr_create_params: ffi::dpiSubscrCreateParams,
 }
 
@@ -31,12 +31,12 @@ impl Context {
            } == constants::DPI_SUCCESS {
             let mut common_cp: structs::ODPICommonCreateParams = Default::default();
             let mut conn_cp: structs::ODPIConnCreateParams = Default::default();
-            // let mut pool_create_params: ffi::dpiPoolCreateParams = Default::default();
+            let mut pool_cp: structs::ODPIPoolCreateParams = Default::default();
             // let mut subscr_create_params: ffi::dpiSubscrCreateParams = Default::default();
             unsafe {
                 externs::dpiContext_initCommonCreateParams(ctxt, &mut common_cp);
                 externs::dpiContext_initConnCreateParams(ctxt, &mut conn_cp);
-                // ffi::dpiContext_initPoolCreateParams(ctxt, &mut pool_create_params);
+                externs::dpiContext_initPoolCreateParams(ctxt, &mut pool_cp);
                 // ffi::dpiContext_initSubscrCreateParams(ctxt, &mut subscr_create_params);
             }
             let driver_name = format!("Rust Oracle: {}", env::var("CARGO_PKG_VERSION")?);
@@ -51,7 +51,7 @@ impl Context {
                    context: ctxt,
                    common_create_params: common_cp,
                    conn_create_params: conn_cp,
-                //    pool_create_params: pool_create_params,
+                   pool_create_params: pool_cp,
                 //    subscr_create_params: subscr_create_params,
                })
         } else {
@@ -105,6 +105,16 @@ impl Context {
     /// DPI_MODE_AUTH_DEFAULT.
     pub fn set_auth_mode(&mut self, auth_mode: flags::ODPIAuthMode) -> &mut Context {
         self.conn_create_params.auth_mode = auth_mode;
+        self
+    }
+
+    /// Set the `min_sessions`
+    ///
+    /// Specifies the minimum number of sessions to be created by the session pool. This value is
+    /// ignored if the dpiPoolCreateParams.homogeneous member has a value of 0. The default value is
+    /// 1.
+    pub fn set_min_sessions(&mut self, min_sessions: u32) -> &mut Context {
+        self.pool_create_params.min_sessions = min_sessions;
         self
     }
 

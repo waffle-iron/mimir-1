@@ -83,24 +83,7 @@ impl Default for ODPIVersionInfo {
         }
     }
 }
-//
-// impl Default for dpiPoolCreateParams {
-//     fn default() -> dpiPoolCreateParams {
-//         dpiPoolCreateParams {
-//             minSessions: 0,
-//             maxSessions: 0,
-//             sessionIncrement: 0,
-//             pingInterval: 0,
-//             pingTimeout: 0,
-//             homogeneous: 0,
-//             externalAuth: 0,
-//             getMode: DPI_MODE_POOL_GET_WAIT,
-//             outPoolName: ptr::null(),
-//             outPoolNameLength: 0,
-//         }
-//     }
-// }
-//
+
 // impl Default for dpiSubscrCreateParams {
 //     fn default() -> dpiSubscrCreateParams {
 //         dpiSubscrCreateParams {
