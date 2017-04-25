@@ -22,7 +22,7 @@ bitflags! {
 /// This enumeration identifies the mode to use when closing connections to the database.
 pub enum ODPIConnCloseMode {
     /// Default value used when closing connections.
-    DefultClose = 0,
+    DefaultClose = 0,
     /// Causes the session to be dropped from the session pool instead of simply returned to the
     /// pool for future use.
     DropSession = 1,
@@ -50,6 +50,7 @@ bitflags! {
 
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[allow(dead_code)]
 /// This enumeration identifies the types of events that can take place. The event type is part of
 /// the messages that are sent to subscriptions.
 pub enum ODPIEventType {
@@ -141,6 +142,7 @@ bitflags! {
 
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[allow(dead_code)]
 /// This enumeration identifies the protocol used for sending notifications to subscriptions.
 pub enum ODPISubscrProtocol {
     /// Notifications are sent by calling the callback specified when the subscription was

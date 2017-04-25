@@ -1,53 +1,68 @@
 //! ODPI-C externs
-use libc::{c_char, c_int, c_uint, c_void};
 use odpi::{flags, opaque, structs};
 
 /// The optional function pointer use in the `ODPISubscrCreateParams` struct.
 pub type ODPISubscrCallback =
-    Option<unsafe extern "C" fn(context: *mut c_void,
+    Option<unsafe extern "C" fn(context: *mut ::std::os::raw::c_void,
                                 message: *mut structs::ODPISubscrMessage)>;
 
 extern "C" {
-    pub fn dpiContext_create(majorVersion: c_uint,
-                             minorVersion: c_uint,
-                             context: *mut *mut opaque::dpiContext,
+    pub fn dpiContext_create(majorVersion: ::std::os::raw::c_uint,
+                             minorVersion: ::std::os::raw::c_uint,
+                             context: *mut *mut opaque::ODPIContext,
                              errorInfo: *mut structs::ODPIErrorInfo)
-                             -> c_int;
-    pub fn dpiContext_destroy(context: *mut opaque::dpiContext) -> c_int;
-    pub fn dpiContext_getError(context: *const opaque::dpiContext,
+                             -> ::std::os::raw::c_int;
+    // pub fn dpiContext_destroy(context: *mut opaque::ODPIContext) -> ::std::os::raw::c_int;
+    pub fn dpiContext_getError(context: *const opaque::ODPIContext,
                                errorInfo: *mut structs::ODPIErrorInfo);
-    pub fn dpiContext_getClientVersion(context: *const opaque::dpiContext,
+    pub fn dpiContext_getClientVersion(context: *const opaque::ODPIContext,
                                        versionInfo: *mut structs::ODPIVersionInfo)
-                                       -> c_int;
-    pub fn dpiContext_initCommonCreateParams(context: *const opaque::dpiContext,
-                                             params: *mut structs::dpiCommonCreateParams)
-                                             -> c_int;
-    pub fn dpiContext_initConnCreateParams(context: *const opaque::dpiContext,
+                                       -> ::std::os::raw::c_int;
+    pub fn dpiContext_initCommonCreateParams(context: *const opaque::ODPIContext,
+                                             params: *mut structs::ODPICommonCreateParams)
+                                             -> ::std::os::raw::c_int;
+    pub fn dpiContext_initConnCreateParams(context: *const opaque::ODPIContext,
                                            params: *mut structs::ODPIConnCreateParams)
-                                           -> c_int;
-    pub fn dpiContext_initPoolCreateParams(context: *const opaque::dpiContext,
+                                           -> ::std::os::raw::c_int;
+    pub fn dpiContext_initPoolCreateParams(context: *const opaque::ODPIContext,
                                            params: *mut structs::ODPIPoolCreateParams)
-                                           -> c_int;
-    pub fn dpiContext_initSubscrCreateParams(context: *const opaque::dpiContext,
+                                           -> ::std::os::raw::c_int;
+    pub fn dpiContext_initSubscrCreateParams(context: *const opaque::ODPIContext,
                                              params: *mut structs::ODPISubscrCreateParams)
-                                             -> c_int;
+                                             -> ::std::os::raw::c_int;
 }
 
 extern "C" {
-    pub fn dpiConn_create(context: *const opaque::dpiContext,
-                          userName: *const c_char,
+    pub fn dpiConn_addRef(conn: *mut opaque::ODPIConn) -> ::std::os::raw::c_int;
+    pub fn dpiConn_beginDistribTrans(conn: *mut opaque::ODPIConn,
+                                     formatId: ::std::os::raw::c_long,
+                                     transactionId: *const ::std::os::raw::c_char,
+                                     transactionIdLength: u32,
+                                     branchId: *const ::std::os::raw::c_char,
+                                     branchIdLength: u32)
+                                     -> ::std::os::raw::c_int;
+    pub fn dpiConn_changePassword(conn: *mut opaque::ODPIConn,
+                                  userName: *const ::std::os::raw::c_char,
+                                  userNameLength: u32,
+                                  oldPassword: *const ::std::os::raw::c_char,
+                                  oldPasswordLength: u32,
+                                  newPassword: *const ::std::os::raw::c_char,
+                                  newPasswordLength: u32)
+                                  -> ::std::os::raw::c_int;
+    pub fn dpiConn_create(context: *const opaque::ODPIContext,
+                          userName: *const ::std::os::raw::c_char,
                           userNameLength: u32,
-                          password: *const c_char,
+                          password: *const ::std::os::raw::c_char,
                           passwordLength: u32,
-                          connectString: *const c_char,
+                          connectString: *const ::std::os::raw::c_char,
                           connectStringLength: u32,
-                          commonParams: *const structs::dpiCommonCreateParams,
+                          commonParams: *const structs::ODPICommonCreateParams,
                           createParams: *mut structs::ODPIConnCreateParams,
                           conn: *mut *mut opaque::ODPIConn)
-                          -> c_int;
+                          -> ::std::os::raw::c_int;
     pub fn dpiConn_close(conn: *mut opaque::ODPIConn,
                          mode: flags::ODPIConnCloseMode,
-                         tag: *const c_char,
+                         tag: *const ::std::os::raw::c_char,
                          tagLength: u32)
-                         -> c_int;
+                         -> ::std::os::raw::c_int;
 }

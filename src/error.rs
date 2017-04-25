@@ -1,6 +1,7 @@
 //! `oci` errors
 use context::Context;
-use ffi::{dpiContext_getError, dpiErrorInfo};
+use odpi::externs::dpiContext_getError;
+use odpi::structs::ODPIErrorInfo;
 use std::ffi::CStr;
 use std::fmt;
 use std::mem;
@@ -99,16 +100,16 @@ impl fmt::Display for Odpi {
 }
 
 /// Create an `ErrorKind` error from an `ODPIErrorInfo` struct.
-fn from_dpi_error_info(err: &dpiErrorInfo) -> ErrorKind {
+fn from_dpi_error_info(err: &ODPIErrorInfo) -> ErrorKind {
     let slice =
-        unsafe { slice::from_raw_parts(err.message as *mut u8, err.messageLength as usize) };
-    let fn_name = unsafe { CStr::from_ptr(err.fnName) }
+        unsafe { slice::from_raw_parts(err.message as *mut u8, err.message_length as usize) };
+    let fn_name = unsafe { CStr::from_ptr(err.fn_name) }
         .to_string_lossy()
         .into_owned();
     let action = unsafe { CStr::from_ptr(err.action) }
         .to_string_lossy()
         .into_owned();
-    let sql_state = unsafe { CStr::from_ptr(err.sqlState) }
+    let sql_state = unsafe { CStr::from_ptr(err.sql_state) }
         .to_string_lossy()
         .into_owned();
     let err = Odpi::new(err.code,
@@ -117,7 +118,7 @@ fn from_dpi_error_info(err: &dpiErrorInfo) -> ErrorKind {
                         fn_name,
                         action,
                         sql_state,
-                        err.isRecoverable.is_positive());
+                        err.is_recoverable.is_positive());
     if err.message().starts_with("DPI") {
         ErrorKind::DpiError(err)
     } else {
@@ -128,7 +129,7 @@ fn from_dpi_error_info(err: &dpiErrorInfo) -> ErrorKind {
 /// Create an `ErrorKind` from an ODPI-C error.
 pub fn from_dpi_context(ctxt: &Context) -> ErrorKind {
     unsafe {
-        let mut err = mem::uninitialized::<dpiErrorInfo>();
+        let mut err = mem::uninitialized::<ODPIErrorInfo>();
         dpiContext_getError(ctxt.context(), &mut err);
         from_dpi_error_info(&err)
     }
@@ -141,9 +142,9 @@ error_chain! {
     }
 
     errors {
-        ConnClose {
-            description("Failed to close the connection!")
-            display("Failed to close the connection!")
+        BranchId {
+            description("The given batch id is longer than 64 bytes!")
+            display("The given batch id is longer than 64 bytes!")
         }
         ContextCreateFailed {
             description("Failed to create the ODPI-C context!")
@@ -156,6 +157,10 @@ error_chain! {
         OciError(err: Odpi) {
             description("OCI Error!")
             display("OCI Error! {}", err)
+        }
+        TxnId {
+            description("The given transaction id is longer than 64 bytes!")
+            display("The given transaction id is longer than 64 bytes!")
         }
     }
 }
