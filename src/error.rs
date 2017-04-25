@@ -1,6 +1,6 @@
 //! `oci` errors
 use context::Context;
-use odpi::{externs, structs};
+use ffi::{dpiContext_getError, dpiErrorInfo};
 use std::ffi::CStr;
 use std::fmt;
 use std::mem;
@@ -88,7 +88,7 @@ impl Odpi {
 impl fmt::Display for Odpi {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f,
-                 "{}: {} {} {} {} {}",
+                 "{}: {}, fn: {} action: {} sql_state: {} recoverable: {}",
                  self.code,
                  self.message,
                  self.fn_name,
@@ -99,16 +99,16 @@ impl fmt::Display for Odpi {
 }
 
 /// Create an `ErrorKind` error from an `ODPIErrorInfo` struct.
-fn from_dpi_error_info(err: &structs::ODPIErrorInfo) -> ErrorKind {
+fn from_dpi_error_info(err: &dpiErrorInfo) -> ErrorKind {
     let slice =
-        unsafe { slice::from_raw_parts(err.message as *mut u8, err.message_length as usize) };
-    let fn_name = unsafe { CStr::from_ptr(err.fn_name) }
+        unsafe { slice::from_raw_parts(err.message as *mut u8, err.messageLength as usize) };
+    let fn_name = unsafe { CStr::from_ptr(err.fnName) }
         .to_string_lossy()
         .into_owned();
     let action = unsafe { CStr::from_ptr(err.action) }
         .to_string_lossy()
         .into_owned();
-    let sql_state = unsafe { CStr::from_ptr(err.sql_state) }
+    let sql_state = unsafe { CStr::from_ptr(err.sqlState) }
         .to_string_lossy()
         .into_owned();
     let err = Odpi::new(err.code,
@@ -117,7 +117,7 @@ fn from_dpi_error_info(err: &structs::ODPIErrorInfo) -> ErrorKind {
                         fn_name,
                         action,
                         sql_state,
-                        err.is_recoverable.is_positive());
+                        err.isRecoverable.is_positive());
     if err.message().starts_with("DPI") {
         ErrorKind::DpiError(err)
     } else {
@@ -128,8 +128,8 @@ fn from_dpi_error_info(err: &structs::ODPIErrorInfo) -> ErrorKind {
 /// Create an `ErrorKind` from an ODPI-C error.
 pub fn from_dpi_context(ctxt: &Context) -> ErrorKind {
     unsafe {
-        let mut err = mem::uninitialized::<structs::ODPIErrorInfo>();
-        externs::dpiContext_getError(ctxt.context(), &mut err);
+        let mut err = mem::uninitialized::<dpiErrorInfo>();
+        dpiContext_getError(ctxt.context(), &mut err);
         from_dpi_error_info(&err)
     }
 }

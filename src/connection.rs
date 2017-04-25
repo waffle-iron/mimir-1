@@ -42,9 +42,9 @@ impl Connection {
                                               password_len,
                                               connect_string_ptr,
                                               connect_string_len,
-                                              ptr::null(),
+                                              // ptr::null(),
+                                              &context.common_create_params(),
                                               ptr::null_mut(),
-                                              //   &context.common_create_params(),
                                               //   &mut context.conn_create_params(),
                                               &mut conn);
 
@@ -87,11 +87,11 @@ mod test {
         match Context::new() {
             Ok(ref mut ctxt) => {
                 ctxt.set_encoding("UTF-8");
-                ctxt.set_nchar_encoding("UTF-8");
+                // ctxt.set_nchar_encoding("UTF-8");
                 match Connection::connect(ctxt,
                                           Some("bvprod"),
                                           Some("veritiv001"),
-                                          "//ecstgdb.int.distco.com:1521/bvnstage") {
+                                          "//ecstgdb.int.distco.com/bvnstage") {
                     Ok(conn) => assert!(true),
                     Err(_e) => {
                         println!("{}", error::from_dpi_context(ctxt));

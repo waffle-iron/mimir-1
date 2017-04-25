@@ -1,4 +1,5 @@
 //! ODPI-C Public Structs.
+#![allow(non_snake_case)]
 use libc::{c_char, c_int, c_void};
 use odpi::{externs, flags, opaque};
 
@@ -10,33 +11,33 @@ use odpi::{externs, flags, opaque};
 /// to valid values prior to being used in the `ODPIConnCreateParams` structure and must remain
 /// valid until the execution of `dpiConn_create()` completes. Values set using this structure are
 /// available in logon triggers by using the `sys_context()` SQL function.
-pub struct ODPIAppContext {
+pub struct dpiAppContext {
     /// Specifies the value of the "namespace" parameter to sys_context(). It is expected to be a
     /// byte string in the encoding specified in the dpiConnCreateParams structure and must not be
     /// NULL.
-    pub namespace_name: *const c_char,
+    pub namespaceName: *const c_char,
     /// Specifies the length of the dpiAppContext.namespaceName member, in bytes.
-    pub namespace_name_length: u32,
+    pub namespaceNameLength: u32,
     /// Specifies the value of the "parameter" parameter to sys_context(). It is expected to be a
     /// byte string in the encoding specified in the dpiConnCreateParams structure and must not be
     /// NULL.
     pub name: *const c_char,
     /// Specifies the length of the dpiAppContext.name member, in bytes.
-    pub name_length: u32,
+    pub nameLength: u32,
     /// Specifies the value that will be returned from sys_context(). It is expected to be a byte
     /// string in the encoding specified in the dpiConnCreateParams structure and must not be NULL.
     pub value: *const c_char,
     /// Specifies the length of the dpiAppContext.value member, in bytes.
-    pub value_length: u32,
+    pub valueLength: u32,
 }
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
 /// This structure is used when creating session pools and standalone connections to the
 /// database.
-pub struct ODPICommonCreateParams {
+pub struct dpiCommonCreateParams {
     /// The mode to use when creating connections to the database.
-    pub create_mode: flags::ODPICreateMode,
+    pub createMode: flags::ODPICreateMode,
     /// Specifies the encoding to use for CHAR data, as a null-terminated ASCII string. Either an
     /// IANA or Oracle specific character set name is expected. NULL is also acceptable which
     /// implies the use of the NLS_LANG environment variable. The default value is NULL.
@@ -44,21 +45,21 @@ pub struct ODPICommonCreateParams {
     /// Specifies the encoding to use for NCHAR data, as a null-terminated ASCII string. Either an
     /// IANA or Oracle specific character set name is expected. NULL is also acceptable which
     /// implies the use of the NLS_NCHAR environment variable. The default value is NULL.
-    pub nchar_encoding: *const c_char,
+    pub nencoding: *const c_char,
     /// Specifies the edition to be used when creating a standalone connection. It is expected to
     /// be NULL (meaning that no edition is set) or a byte string in the encoding specified by the
     /// dpiCommonCreateParams.encoding member. The default value is NULL.
     pub edition: *const c_char,
     /// Specifies the length of the dpiCommonCreateParams.edition member, in bytes. The default
     /// value is 0.
-    pub edition_length: u32,
+    pub editionLength: u32,
     /// Specifies the name of the driver that is being used. It is expected to be NULL or a byte
     /// string in the encoding specified by the dpiCommonCreateParams.encoding member. The default
     /// value is NULL.
-    pub driver_name: *const c_char,
+    pub driverName: *const c_char,
     /// Specifies the length of the dpiCommonCreateParams.driverName member, in bytes. The default
     /// value is 0.
-    pub driver_name_length: u32,
+    pub driverNameLength: u32,
 }
 
 #[repr(C)]
@@ -97,7 +98,7 @@ pub struct ODPIConnCreateParams {
     /// value is only used when creating standalone connections. It is expected to be NULL or an
     /// array of `ODPIAppContext` structures. The context specified here can be used in logon
     /// triggers, for example. The default value is NULL.
-    pub app_context: *mut ODPIAppContext,
+    pub app_context: *mut dpiAppContext,
     /// Specifies the number of elements found in the dpiConnCreateParams.appContext member. The
     /// default value is 0.
     pub num_app_context: u32,
@@ -146,7 +147,7 @@ pub struct ODPIConnCreateParams {
 #[derive(Copy, Clone, Debug)]
 /// This structure is used for transferring error information from ODPI-C. All of the strings
 /// referenced here may become invalid as soon as the next ODPI-C call is made.
-pub struct ODPIErrorInfo {
+pub struct dpiErrorInfo {
     /// The OCI error code if an OCI error has taken place. If no OCI error has taken place the
     /// value is 0.
     pub code: i32,
@@ -157,22 +158,22 @@ pub struct ODPIErrorInfo {
     /// member.
     pub message: *const c_char,
     /// The length of the dpiErrorInfo.message member, in bytes.
-    pub message_length: u32,
+    pub messageLength: u32,
     /// The encoding in which the error message is encoded as a null-terminated string. For OCI
     /// errors this is the CHAR encoding used when the connection was created. For ODPI-C specific
     /// errors this is UTF-8.
     pub encoding: *const c_char,
     /// The public ODPI-C function name which was called in which the error took place. This is a
     /// null-terminated ASCII string.
-    pub fn_name: *const c_char,
+    pub fnName: *const c_char,
     /// The internal action that was being performed when the error took place. This is a
     /// null-terminated ASCII string.
     pub action: *const c_char,
     /// The SQLSTATE code associated with the error. This is a 5 character null-terminated string.
-    pub sql_state: *const c_char,
+    pub sqlState: *const c_char,
     /// A boolean value indicating if the error is recoverable. This member always has a value of 0
     /// unless both client and server are at release 12.1 or higher.
-    pub is_recoverable: c_int,
+    pub isRecoverable: c_int,
 }
 
 #[repr(C)]
