@@ -144,6 +144,26 @@ pub struct ODPIConnCreateParams {
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
+/// This structure is used for transferring encoding information from ODPI-C.
+pub struct ODPIEncodingInfo {
+    /// The encoding used for CHAR data, as a null-terminated ASCII string.
+    pub encoding: *const ::std::os::raw::c_char,
+    /// The maximum number of bytes required for each character in the encoding used for CHAR data.
+    /// This value is used when calculating the size of buffers required when lengths in characters
+    /// are provided.
+    pub max_bytes_per_character: i32,
+    /// The encoding used for NCHAR data, as a null-terminated ASCII string.
+    pub nchar_encoding: *const ::std::os::raw::c_char,
+    /// The maximum number of bytes required for each character in the encoding used for NCHAR data.
+    /// Since this information is not directly available from Oracle it is only accurate if the 
+    /// encodings used for CHAR and NCHAR data are identical or one of ASCII or UTF-8; otherwise a 
+    /// value of 4 is assumed. This value is used when calculating the size of buffers required when
+    /// lengths in characters are provided.
+    pub nchar_max_bytes_per_character: i32,
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug)]
 /// This structure is used for transferring error information from ODPI-C. All of the strings
 /// referenced here may become invalid as soon as the next ODPI-C call is made.
 pub struct ODPIErrorInfo {

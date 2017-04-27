@@ -1,16 +1,17 @@
 //! `oic` ODPI-C Context
 use error::{ErrorKind, Result};
-use odpi::constants::{DPI_SUCCESS, DPI_MAJOR_VERSION, DPI_MINOR_VERSION};
+use odpi::constants::{DPI_FAILURE, DPI_SUCCESS, DPI_MAJOR_VERSION, DPI_MINOR_VERSION};
 use odpi::externs;
 use odpi::flags::{self, ODPIAuthMode, ODPICreateMode};
 use odpi::opaque::ODPIContext;
 use odpi::structs::{ODPICommonCreateParams, ODPIConnCreateParams, ODPIErrorInfo,
                     ODPIPoolCreateParams, ODPISubscrCreateParams};
+use slog::Logger;
 use std::{env, ptr};
 use std::ffi::CStr;
 use std::mem;
 use std::os::raw::c_char;
-use util;
+use util::ODPIStr;
 
 /// ODPI-C Context Wrapper.
 #[derive(Clone)]
@@ -28,6 +29,10 @@ pub struct Context {
     pool_create_params: ODPIPoolCreateParams,
     /// This enumeration identifies the namespaces supported by subscriptions.
     subscr_create_params: ODPISubscrCreateParams,
+    /// Optional stdout logger.
+    stdout: Option<Logger>,
+    /// Optoinal stderr logger.
+    stderr: Option<Logger>,
 }
 
 impl Context {
@@ -53,11 +58,11 @@ impl Context {
 
                 /// Add the driver name to the Common Create Params struct.
                 let driver_name = format!("Rust Oracle: {}", env::var("CARGO_PKG_VERSION")?);
-                let (driver_name_ptr, driver_name_len) = util::to_ffi_str(&driver_name);
+                let driver_name_s = ODPIStr::from(driver_name);
 
                 common_cp.create_mode |= flags::DPI_MODE_CREATE_THREADED;
-                common_cp.driver_name = driver_name_ptr;
-                common_cp.driver_name_length = driver_name_len;
+                common_cp.driver_name = driver_name_s.ptr();
+                common_cp.driver_name_length = driver_name_s.len();
 
                 Ok(Context {
                        context: ctxt,
@@ -65,11 +70,25 @@ impl Context {
                        conn_create_params: conn_cp,
                        pool_create_params: pool_cp,
                        subscr_create_params: subscr_cp,
+                       stdout: None,
+                       stderr: None,
                    })
             }
         } else {
             Err(ErrorKind::ContextCreateFailed.into())
         }
+    }
+
+    /// Set the `stdout` value.
+    pub fn set_stdout(&mut self, stdout: Option<Logger>) -> &mut Context {
+        self.stdout = stdout;
+        self
+    }
+
+    /// Set the `stderr` value.
+    pub fn set_stderr(&mut self, stderr: Option<Logger>) -> &mut Context {
+        self.stderr = stderr;
+        self
     }
 
     /// Get the `context` value.
@@ -136,7 +155,9 @@ impl Context {
     /// IANA or Oracle specific character set name is expected. NULL is also acceptable which
     /// implies the use of the NLS_LANG environment variable. The default value is NULL.
     pub fn set_encoding(&mut self, encoding: &str) -> &mut Context {
-        self.common_create_params.encoding = encoding.as_ptr() as *const c_char;
+        let mut nt_enc = String::from(encoding);
+        nt_enc.push('\0');
+        self.common_create_params.encoding = nt_enc.as_ptr() as *const c_char;
         self
     }
 
@@ -154,8 +175,20 @@ impl Context {
     /// IANA or Oracle specific character set name is expected. NULL is also acceptable which
     /// implies the use of the NLS_NCHAR environment variable. The default value is NULL.
     pub fn set_nchar_encoding(&mut self, nchar_encoding: &str) -> &mut Context {
-        self.common_create_params.nchar_encoding = nchar_encoding.as_ptr() as *const c_char;
+        let mut nt_enc = String::from(nchar_encoding);
+        nt_enc.push('\0');
+        self.common_create_params.nchar_encoding = nt_enc.as_ptr() as *const c_char;
         self
+    }
+}
+
+impl Drop for Context {
+    fn drop(&mut self) {
+        if unsafe { externs::dpiContext_destroy(self.context()) } == DPI_FAILURE {
+            try_error!(self.stderr, "Failed to destroy context");
+        } else {
+            try_info!(self.stdout, "Successfully destroyed context");
+        }
     }
 }
 
@@ -170,7 +203,7 @@ mod test {
         match Context::new() {
             Ok(mut ctxt) => {
                 assert!(ctxt.auth_mode() == DPI_MODE_AUTH_DEFAULT);
-                let enc = "UTF-8\0";
+                let enc = "UTF-8";
                 ctxt.set_encoding(enc);
                 ctxt.set_nchar_encoding(enc);
                 ctxt.set_auth_mode(DPI_MODE_AUTH_DEFAULT | DPI_MODE_AUTH_SYSDBA);

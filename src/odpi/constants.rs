@@ -7,5 +7,5 @@ pub const DPI_MAJOR_VERSION: c_uint = 2;
 pub const DPI_MINOR_VERSION: c_uint = 0;
 /// Value returned on success.
 pub const DPI_SUCCESS: c_int = 0;
-// /// Value returned on failure.
-// pub const DPI_FAILURE: c_int = -1;
+/// Value returned on failure.
+pub const DPI_FAILURE: c_int = -1;

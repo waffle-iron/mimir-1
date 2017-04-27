@@ -89,7 +89,7 @@ impl Odpi {
 impl fmt::Display for Odpi {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f,
-                 "{}: {}, fn: {} action: {} sql_state: {} recoverable: {}",
+                 "{}: {}\nfn: {}\naction: {}\nsql_state: {}\nrecoverable: {}",
                  self.code,
                  self.message,
                  self.fn_name,
@@ -142,6 +142,10 @@ error_chain! {
     }
 
     errors {
+        Connection(fn_name: String) {
+            description("Connection: call to ODPI-C function failed!")
+            display("Connection: call to '{}' function failed!", fn_name)
+        }
         BranchId {
             description("The given batch id is longer than 64 bytes!")
             display("The given batch id is longer than 64 bytes!")

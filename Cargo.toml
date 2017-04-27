@@ -10,3 +10,4 @@ gcc = "0.3.45"
 [dependencies]
 bitflags = "0.8.2"
 error-chain = "0.10.0"
+slog = "2.0.2"
