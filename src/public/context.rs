@@ -1,4 +1,7 @@
-//! `oic` ODPI-C Context
+//! Context handles are the top level handles created by the library and are used for all error
+//! handling as well as creating pools and standalone connections to the database. The first call to
+//! ODPI-C by any application must be `new` which will create the context as well as validate the
+//! version used by the application. Context handles are destroyed by using the function `destroy`.
 use error::{ErrorKind, Result};
 use odpi::constants::{DPI_FAILURE, DPI_SUCCESS, DPI_MAJOR_VERSION, DPI_MINOR_VERSION};
 use odpi::externs;

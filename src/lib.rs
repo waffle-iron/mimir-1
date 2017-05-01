@@ -12,8 +12,8 @@ extern crate slog;
 #[macro_use]
 mod macros;
 
-mod connection;
-mod context;
+mod public;
+
 mod deqopts;
 mod enqopts;
 mod error;
@@ -24,5 +24,6 @@ mod util;
 pub mod version;
 
 pub use error::from_dpi_context;
-pub use connection::Connection;
-pub use context::Context;
+pub use public::connection::Connection;
+pub use public::context::Context;
+pub use public::VersionInfo;

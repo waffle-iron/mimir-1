@@ -1,7 +1,7 @@
 //! `oci` errors
-use context::Context;
 use odpi::externs::dpiContext_getError;
 use odpi::structs::ODPIErrorInfo;
+use public::context::Context;
 use std::ffi::CStr;
 use std::fmt;
 use std::mem;

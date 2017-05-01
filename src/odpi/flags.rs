@@ -259,6 +259,45 @@ bitflags! {
     }
 }
 
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+/// This enumeration identifies the mode to use when shutting down a database using
+/// dpiConn_shutdownDatabase().
+pub enum ODPIShutdownMode {
+    /// Further connections to the database are prohibited. Wait for users to disconnect from the
+    /// database.
+    Def = 0,
+    /// Further connections to the database are prohibited and no new transactions are allowed to be
+    /// started. Wait for active transactions to complete.
+    Transactional = 1,
+    /// Behaves the same way as `Transactional` but only waits for local transactions to complete.
+    TransactionalLocal = 2,
+    /// All uncommitted transactions are terminated and rolled back and all connections to the
+    /// database are closed immediately.
+    Immediate = 3,
+    /// All uncommitted transactions are terminated and are not rolled back. This is the fastest way
+    /// to shut down the database but the next database startup may require instance recovery.
+    Abort = 4,
+    /// Shuts down the database. This mode should only be used in the second call to
+    /// dpiConn_shutdownDatabase().
+    Final = 5,
+}
+
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+/// This enumeration identifies the mode to use when starting up a database using
+/// dpiConn_startupDatabase().
+pub enum ODPIStartupMode {
+    /// Default mode for startup which permits database access to all users.
+    Def = 0,
+    /// Shuts down a running instance (using ABORT) before starting a new one. This mode should only
+    /// be used in unusual circumstances.
+    Force = 1,
+    /// Only allows database access to users with both the CREATE SESSION and RESTRICTED SESSION
+    /// privileges (normally the DBA).
+    Restrict = 2,
+}
+
 bitflags! {
     #[repr(C)]
     /// This enumeration identifies the namespaces supported by subscriptions.

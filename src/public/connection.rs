@@ -1,5 +1,9 @@
-//! Connection Related Operations
-use context::Context;
+//! Connection handles are used to represent connections to the database. These can be standalone
+//! connections created by calling the function `connect` or acquired from a session pool by calling
+//! the function `acquire`. They can be closed by calling the function `close` or releasing the last
+//! reference to the connection by calling the function `release`. Connection handles are used to
+//! create all handles other than session pools and context handles.
+use public::context::Context;
 use deqopts::DeqOptions;
 use enqopts::EnqOptions;
 use error::{ErrorKind, Result};
@@ -412,6 +416,56 @@ impl Connection {
                  ErrorKind::Connection("dpiConn_prepareStmt".to_string()))
     }
 
+    /// Releases a reference to the connection. A count of the references to the connection is
+    /// maintained and when this count reaches zero, the memory associated with the connection is
+    /// freed and the connection is closed or released back to the session pool if that has not
+    /// already taken place using the function dpiConn_close().
+    pub fn release(&self) -> Result<()> {
+        try_dpi!(externs::dpiConn_release(self.conn),
+                 Ok(()),
+                 ErrorKind::Connection("dpiConn_release".to_string()))
+    }
+
+    /// Rolls back the current active transaction.
+    pub fn rollback(&self) -> Result<()> {
+        try_dpi!(externs::dpiConn_rollback(self.conn),
+                 Ok(()),
+                 ErrorKind::Connection("dpiConn_rollback".to_string()))
+    }
+
+    /// Sets the action attribute on the connection. This is one of the end-to-end tracing
+    /// attributes that can be tracked in database views, shown in audit trails and seen in tools
+    /// such as Enterprise Manager.
+    pub fn set_action(&self, action: &str) -> Result<()> {
+        let action_s = ODPIStr::from(action);
+
+        try_dpi!(externs::dpiConn_setAction(self.conn, action_s.ptr(), action_s.len()),
+                 Ok(()),
+                 ErrorKind::Connection("dpiConn_setAction".to_string()))
+    }
+
+    /// Sets the client identifier attribute on the connection. This is one of the end-to-end
+    /// tracing attributes that can be tracked in database views, shown in audit trails and seen in
+    /// tools such as Enterprise Manager.
+    pub fn set_client_identifier(&self, id: &str) -> Result<()> {
+        let id_s = ODPIStr::from(id);
+
+        try_dpi!(externs::dpiConn_setClientIdentifier(self.conn, id_s.ptr(), id_s.len()),
+                 Ok(()),
+                 ErrorKind::Connection("dpiConn_setClientIdentifier".to_string()))
+    }
+
+    /// Sets the client info attribute on the connection. This is one of the end-to-end tracing
+    /// attributes that can be tracked in database views, shown in audit trails and seen in tools
+    /// such as Enterprise Manager.
+    pub fn set_client_info(&self, info: &str) -> Result<()> {
+        let info_s = ODPIStr::from(info);
+
+        try_dpi!(externs::dpiConn_setClientInfo(self.conn, info_s.ptr(), info_s.len()),
+                 Ok(()),
+                 ErrorKind::Connection("dpiConn_setClientInfo".to_string()))
+    }
+
     /// Sets the current schema to be used on the connection. This has the same effect as the SQL
     /// statement ALTER SESSION SET CURRENT_SCHEMA. The value be changed when the next call
     /// requiring a round trip to the server is performed. If the new schema name does not exist,
@@ -426,12 +480,79 @@ impl Connection {
                  Ok(()),
                  ErrorKind::Connection("dpiConn_setCurrentSchema".to_string()))
     }
+
+    /// Sets the database operation attribute on the connection. This is one of the end-to-end
+    /// tracing attributes that can be tracked in database views, shown in audit trails and seen in
+    /// tools such as Enterprise Manager.
+    pub fn set_db_op(&self, op: &str) -> Result<()> {
+        let db_op_s = ODPIStr::from(op);
+
+        try_dpi!(externs::dpiConn_setDbOp(self.conn, db_op_s.ptr(), db_op_s.len()),
+                 Ok(()),
+                 ErrorKind::Connection("dpiConn_setDbOp".to_string()))
+    }
+
+    /// Sets the external name that is being used by the connection. This value is used when logging
+    /// distributed transactions.
+    pub fn set_external_name(&self, ext_name: &str) -> Result<()> {
+        let ext_name_s = ODPIStr::from(ext_name);
+
+        try_dpi!(externs::dpiConn_setExternalName(self.conn, ext_name_s.ptr(), ext_name_s.len()),
+                 Ok(()),
+                 ErrorKind::Connection("dpiConn_setExternalName".to_string()))
+    }
+
+    /// Sets the internal name that is being used by the connection. This value is used when logging
+    /// distributed transactions.
+    pub fn set_internal_name(&self, int_name: &str) -> Result<()> {
+        let int_name_s = ODPIStr::from(int_name);
+
+        try_dpi!(externs::dpiConn_setInternalName(self.conn, int_name_s.ptr(), int_name_s.len()),
+                 Ok(()),
+                 ErrorKind::Connection("dpiConn_setInternalName".to_string()))
+    }
+
+    /// Sets the module attribute on the connection. This is one of the end-to-end tracing
+    /// attributes that can be tracked in database views, shown in audit trails and seen in tools
+    /// such as Enterprise Manager.
+    pub fn set_module(&self, module: &str) -> Result<()> {
+        let module_s = ODPIStr::from(module);
+
+        try_dpi!(externs::dpiConn_setModule(self.conn, module_s.ptr(), module_s.len()),
+                 Ok(()),
+                 ErrorKind::Connection("dpiConn_setModule".to_string()))
+    }
+
+    /// Sets the size of the statement cache.
+    pub fn set_statement_cache_size(self, size: u32) -> Result<()> {
+        try_dpi!(externs::dpiConn_setStmtCacheSize(self.conn, size),
+                 Ok(()),
+                 ErrorKind::Connection("dpiConn_setStmtCacheSize".to_string()))
+    }
+
+    /// Shuts down the database. This function must be called twice for the database to be shut down
+    /// successfully. After calling this function the first time, the SQL statements "alter database
+    /// close normal" and "alter database dismount" must be executed. Once that is complete this
+    /// function should be called again with the mode DPI_MODE_SHUTDOWN_FINAL in order to complete
+    /// the orderly shutdown of the database.
+    pub fn shutdown_database(self, mode: flags::ODPIShutdownMode) -> Result<()> {
+        try_dpi!(externs::dpiConn_shutdownDatabase(self.conn, mode),
+                 Ok(()),
+                 ErrorKind::Connection("dpiConn_shutdownDatabase".to_string()))
+    }
+
+    /// Starts up a database
+    pub fn start_database(self, mode: flags::ODPIStartupMode) -> Result<()> {
+        try_dpi!(externs::dpiConn_startupDatabase(self.conn, mode),
+                 Ok(()),
+                 ErrorKind::Connection("dpiConn_startupDatabase".to_string()))
+    }
 }
 
 #[cfg(test)]
 mod test {
-    use context::Context;
-    use connection::Connection;
+    use Context;
+    use Connection;
     use error;
     use odpi::flags::ODPIConnCloseMode::*;
 
@@ -444,7 +565,7 @@ mod test {
                     match Connection::connect(ctxt,
                                             Some("jozias"),
                                             Some("chip18jj"),
-                                            "//oic.cbsnae86d3iv.us-east-2.rds.amazonaws.com/ORCL") {
+                                            "//localhost/ORCL") {
                         $tst => { $b }
                         Err(_e) => {
                             use std::io::{self, Write};
@@ -489,7 +610,6 @@ mod test {
                 Ok(_) => {
                     match conn.current_schema() {
                         Ok(schema) => {
-                            let _ = conn.close(DefaultClose, None);
                             assert!(schema == "jozias");
                         }
                         Err(_e) => assert!(false),
@@ -497,6 +617,7 @@ mod test {
                 }
                 Err(_e) => assert!(false),
             }
+            let _ = conn.close(DefaultClose, None);
         })
     }
 
@@ -516,13 +637,18 @@ mod test {
     #[test]
     fn external_name() {
         with_conn!(Ok(conn) => {
-            match conn.external_name() {
-                Ok(_external_name) => {
-                    let _ = conn.close(DefaultClose, None);
-                    assert!(true)
+            match conn.set_external_name("foobar") {
+                Ok(_) => {
+                    match conn.external_name() {
+                        Ok(ext_name) => {
+                            assert!(ext_name == "foobar");
+                        }
+                        Err(_e) => assert!(false),
+                    }
                 }
                 Err(_e) => assert!(false),
             }
+            let _ = conn.close(DefaultClose, None);
         })
     }
 
@@ -558,6 +684,72 @@ mod test {
     fn ping() {
         with_conn!(Ok(conn) => {
             match conn.ping() {
+                Ok(_) => assert!(true),
+                Err(_e) => assert!(false),
+            }
+            let _ = conn.close(DefaultClose, None);
+        })
+    }
+
+    #[test]
+    fn set_action() {
+        with_conn!(Ok(conn) => {
+            match conn.set_action("oci_test") {
+                Ok(_) => assert!(true),
+                Err(_e) => assert!(false),
+            }
+            let _ = conn.close(DefaultClose, None);
+        })
+    }
+
+    #[test]
+    fn set_client_id() {
+        with_conn!(Ok(conn) => {
+            match conn.set_client_identifier("oci_test") {
+                Ok(_) => assert!(true),
+                Err(_e) => assert!(false),
+            }
+            let _ = conn.close(DefaultClose, None);
+        })
+    }
+
+    #[test]
+    fn set_client_info() {
+        with_conn!(Ok(conn) => {
+            match conn.set_client_info("oci_test") {
+                Ok(_) => assert!(true),
+                Err(_e) => assert!(false),
+            }
+            let _ = conn.close(DefaultClose, None);
+        })
+    }
+
+    #[test]
+    fn set_db_op() {
+        with_conn!(Ok(conn) => {
+            match conn.set_db_op("oci_test") {
+                Ok(_) => assert!(true),
+                Err(_e) => assert!(false),
+            }
+            let _ = conn.close(DefaultClose, None);
+        })
+    }
+
+    #[test]
+    fn set_internal_name() {
+        with_conn!(Ok(conn) => {
+            match conn.set_internal_name("oci_test") {
+                Ok(_) => assert!(true),
+                Err(_e) => assert!(false),
+            }
+            let _ = conn.close(DefaultClose, None);
+        })
+    }
+
+    #[test]
+    fn set_module() {
+        with_conn!(Ok(conn) => {
+            match conn.set_module("oci_test") {
                 Ok(_) => assert!(true),
                 Err(_e) => assert!(false),
             }

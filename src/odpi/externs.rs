@@ -165,8 +165,47 @@ extern "C" {
                                tagLength: u32,
                                stmt: *mut *mut opaque::ODPIStmt)
                                -> ::std::os::raw::c_int;
+    pub fn dpiConn_release(conn: *mut opaque::ODPIConn) -> ::std::os::raw::c_int;
+    pub fn dpiConn_rollback(conn: *mut opaque::ODPIConn) -> ::std::os::raw::c_int;
+    pub fn dpiConn_setAction(conn: *mut opaque::ODPIConn,
+                             value: *const ::std::os::raw::c_char,
+                             valueLength: u32)
+                             -> ::std::os::raw::c_int;
+    pub fn dpiConn_setClientIdentifier(conn: *mut opaque::ODPIConn,
+                                       value: *const ::std::os::raw::c_char,
+                                       valueLength: u32)
+                                       -> ::std::os::raw::c_int;
+    pub fn dpiConn_setClientInfo(conn: *mut opaque::ODPIConn,
+                                 value: *const ::std::os::raw::c_char,
+                                 valueLength: u32)
+                                 -> ::std::os::raw::c_int;
     pub fn dpiConn_setCurrentSchema(conn: *mut opaque::ODPIConn,
                                     value: *const ::std::os::raw::c_char,
                                     valueLength: u32)
                                     -> ::std::os::raw::c_int;
+    pub fn dpiConn_setDbOp(conn: *mut opaque::ODPIConn,
+                           value: *const ::std::os::raw::c_char,
+                           valueLength: u32)
+                           -> ::std::os::raw::c_int;
+    pub fn dpiConn_setExternalName(conn: *mut opaque::ODPIConn,
+                                   value: *const ::std::os::raw::c_char,
+                                   valueLength: u32)
+                                   -> ::std::os::raw::c_int;
+    pub fn dpiConn_setInternalName(conn: *mut opaque::ODPIConn,
+                                   value: *const ::std::os::raw::c_char,
+                                   valueLength: u32)
+                                   -> ::std::os::raw::c_int;
+    pub fn dpiConn_setModule(conn: *mut opaque::ODPIConn,
+                             value: *const ::std::os::raw::c_char,
+                             valueLength: u32)
+                             -> ::std::os::raw::c_int;
+    pub fn dpiConn_setStmtCacheSize(conn: *mut opaque::ODPIConn,
+                                    cacheSize: u32)
+                                    -> ::std::os::raw::c_int;
+    pub fn dpiConn_shutdownDatabase(conn: *mut opaque::ODPIConn,
+                                    mode: flags::ODPIShutdownMode)
+                                    -> ::std::os::raw::c_int;
+    pub fn dpiConn_startupDatabase(conn: *mut opaque::ODPIConn,
+                                   mode: flags::ODPIStartupMode)
+                                   -> ::std::os::raw::c_int;
 }
