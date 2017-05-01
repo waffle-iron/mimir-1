@@ -95,14 +95,78 @@ extern "C" {
                               -> ::std::os::raw::c_int;
     pub fn dpiConn_getEncodingInfo(conn: *mut opaque::ODPIConn,
                                    info: *mut structs::ODPIEncodingInfo)
-     -> ::std::os::raw::c_int;
+                                   -> ::std::os::raw::c_int;
     pub fn dpiConn_getExternalName(conn: *mut opaque::ODPIConn,
                                    value: *mut *const ::std::os::raw::c_char,
                                    valueLength: *mut u32)
-     -> ::std::os::raw::c_int;
+                                   -> ::std::os::raw::c_int;
+    pub fn dpiConn_getHandle(conn: *mut opaque::ODPIConn,
+                             handle: *mut *mut ::std::os::raw::c_void)
+                             -> ::std::os::raw::c_int;
+    pub fn dpiConn_getInternalName(conn: *mut opaque::ODPIConn,
+                                   value: *mut *const ::std::os::raw::c_char,
+                                   valueLength: *mut u32)
+                                   -> ::std::os::raw::c_int;
+    pub fn dpiConn_getLTXID(conn: *mut opaque::ODPIConn,
+                            value: *mut *const ::std::os::raw::c_char,
+                            valueLength: *mut u32)
+                            -> ::std::os::raw::c_int;
+    pub fn dpiConn_getObjectType(conn: *mut opaque::ODPIConn,
+                                 name: *const ::std::os::raw::c_char,
+                                 nameLength: u32,
+                                 objType: *mut *mut opaque::ODPIObjectType)
+                                 -> ::std::os::raw::c_int;
     pub fn dpiConn_getServerVersion(conn: *mut opaque::ODPIConn,
                                     releaseString: *mut *const ::std::os::raw::c_char,
                                     releaseStringLength: *mut u32,
                                     versionInfo: *mut structs::ODPIVersionInfo)
+                                    -> ::std::os::raw::c_int;
+    pub fn dpiConn_getStmtCacheSize(conn: *mut opaque::ODPIConn,
+                                    cacheSize: *mut u32)
+                                    -> ::std::os::raw::c_int;
+    pub fn dpiConn_newDeqOptions(conn: *mut opaque::ODPIConn,
+                                 options: *mut *mut opaque::ODPIDeqOptions)
+                                 -> ::std::os::raw::c_int;
+    pub fn dpiConn_newEnqOptions(conn: *mut opaque::ODPIConn,
+                                 options: *mut *mut opaque::ODPIEnqOptions)
+                                 -> ::std::os::raw::c_int;
+    pub fn dpiConn_newMsgProps(conn: *mut opaque::ODPIConn,
+                               props: *mut *mut opaque::ODPIMsgProps)
+                               -> ::std::os::raw::c_int;
+    pub fn dpiConn_newSubscription(conn: *mut opaque::ODPIConn,
+                                   params: *mut structs::ODPISubscrCreateParams,
+                                   subscr: *mut *mut opaque::ODPISubscr,
+                                   subscrId: *mut u32)
+                                   -> ::std::os::raw::c_int;
+    pub fn dpiConn_newTempLob(conn: *mut opaque::ODPIConn,
+                              lobType: flags::ODPIOracleTypeNum,
+                              lob: *mut *mut opaque::ODPILob)
+                              -> ::std::os::raw::c_int;
+    pub fn dpiConn_newVar(conn: *mut opaque::ODPIConn,
+                          oracleTypeNum: flags::ODPIOracleTypeNum,
+                          nativeTypeNum: flags::ODPINativeTypeNum,
+                          maxArraySize: u32,
+                          size: u32,
+                          sizeIsBytes: ::std::os::raw::c_int,
+                          isArray: ::std::os::raw::c_int,
+                          objType: *mut opaque::ODPIObjectType,
+                          var: *mut *mut opaque::ODPIVar,
+                          data: *mut *mut structs::ODPIData)
+                          -> ::std::os::raw::c_int;
+    pub fn dpiConn_ping(conn: *mut opaque::ODPIConn) -> ::std::os::raw::c_int;
+    pub fn dpiConn_prepareDistribTrans(conn: *mut opaque::ODPIConn,
+                                       commitNeeded: *mut ::std::os::raw::c_int)
+                                       -> ::std::os::raw::c_int;
+    pub fn dpiConn_prepareStmt(conn: *mut opaque::ODPIConn,
+                               scrollable: ::std::os::raw::c_int,
+                               sql: *const ::std::os::raw::c_char,
+                               sqlLength: u32,
+                               tag: *const ::std::os::raw::c_char,
+                               tagLength: u32,
+                               stmt: *mut *mut opaque::ODPIStmt)
+                               -> ::std::os::raw::c_int;
+    pub fn dpiConn_setCurrentSchema(conn: *mut opaque::ODPIConn,
+                                    value: *const ::std::os::raw::c_char,
+                                    valueLength: u32)
                                     -> ::std::os::raw::c_int;
 }

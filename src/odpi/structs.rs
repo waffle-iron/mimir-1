@@ -32,6 +32,23 @@ pub struct ODPIAppContext {
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
+/// This structure is used for passing byte strings to and from the database in the structure
+/// dpiData.
+pub struct ODPIBytes {
+    /// Specifies the pointer to the memory allocated by ODPI-C for the variable. For strings, data
+    /// written to this memory should be in the encoding appropriate to the type of data being
+    /// transferred. When data is transferred from the database it will be in the correct encoding
+    /// already.
+    pub ptr: *mut ::std::os::raw::c_char,
+    /// Specifies the length of the byte string, in bytes.
+    pub length: u32,
+    /// Specifies the encoding for character data. This value is populated when data is transferred
+    /// from the database. It is ignored when data is being transferred to the database.
+    pub encoding: *const ::std::os::raw::c_char,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
 /// This structure is used when creating session pools and standalone connections to the
 /// database.
 pub struct ODPICommonCreateParams {
@@ -143,6 +160,68 @@ pub struct ODPIConnCreateParams {
 }
 
 #[repr(C)]
+#[derive(Clone, Copy, Debug)]
+/// This structure is used for passing data to and from the database for variables and for
+/// manipulating object attributes and collection values.
+pub struct ODPIData {
+    /// Specifies if the value refers to a null value (1) or not (0).
+    pub is_null: ::std::os::raw::c_int,
+    /// Specifies the value that is being passed or received.
+    pub value: ODPIDataValueUnion,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
+/// Struct represention C union type for `ODPIData`.
+pub struct ODPIDataValueUnion {
+    /// Value that is used when dpiData.isNull is 0 and the native type that is being used is
+    /// DPI_NATIVE_TYPE_BOOLEAN. The value should be either 1 (true) or 0 (false).
+    pub as_boolean: UnionField<::std::os::raw::c_int>,
+    /// Value that is used when dpiData.isNull is 0 and the native type that is being used is
+    /// DPI_NATIVE_TYPE_INT64.
+    pub as_int_64: UnionField<i64>,
+    /// Value that is used when dpiData.isNull is 0 and the native type that is being used is
+    /// DPI_NATIVE_TYPE_UINT64.
+    pub as_uint_64: UnionField<u64>,
+    /// Value that is used when dpiData.isNull is 0 and the native type that is being used is
+    /// DPI_NATIVE_TYPE_FLOAT.
+    pub as_float: UnionField<f32>,
+    /// Value that is used when dpiData.isNull is 0 and the native type that is being used is
+    /// DPI_NATIVE_TYPE_DOUBLE.
+    pub as_double: UnionField<f64>,
+    /// Value that is used when dpiData.isNull is 0 and the native type that is being used is
+    /// DPI_NATIVE_TYPE_BYTES. This is a structure of type dpiBytes.
+    pub as_bytes: UnionField<ODPIBytes>,
+    /// Value that is used when dpiData.isNull is 0 and the native type that is being used is
+    /// DPI_NATIVE_TYPE_TIMESTAMP. This is a structure of type dpiTimestamp.
+    pub as_timestamp: UnionField<ODPITimestamp>,
+    /// Value that is used when dpiData.isNull is 0 and the native type that is being used is
+    /// DPI_NATIVE_TYPE_INTERVAL_DS. This is a structure of type dpiIntervalDS.
+    pub as_interval_ds: UnionField<ODPIIntervalDS>,
+    /// Value that is used when dpiData.isNull is 0 and the native type that is being used is
+    /// DPI_NATIVE_TYPE_INTERVAL_YM. This is a structure of type dpiIntervalYM.
+    pub as_interval_ym: UnionField<ODPIIntervalYM>,
+    /// Value that is used when dpiData.isNull is 0 and the native type that is being used is
+    /// DPI_NATIVE_TYPE_LOB. This is a reference to a LOB (large object) which can be used for
+    /// reading and writing the data that belongs to it.
+    pub as_lob: UnionField<*mut opaque::ODPILob>,
+    /// Value that is used when dpiData.isNull is 0 and the native type that is being used is
+    /// DPI_NATIVE_TYPE_OBJECT. This is a reference to an object which can be used for reading and
+    /// writing its attributes or element values.
+    pub as_object: UnionField<*mut opaque::ODPIObject>,
+    /// Value that is used when dpiData.isNull is 0 and the native type that is being used is
+    /// DPI_NATIVE_TYPE_STMT. This is a reference to a statement which can be used to query data
+    /// from the database.
+    pub as_stmt: UnionField<*mut opaque::ODPIStmt>,
+    /// Value that is used when dpiData.isNull is 0 and the native type that is being used is
+    /// DPI_NATIVE_TYPE_ROWID. This is a reference to a rowid which is used to uniquely identify a
+    /// row in a table in the database.
+    pub as_rowid: UnionField<*mut opaque::ODPIRowid>,
+    /// Union field value
+    pub bindgen_union_field: [u64; 3usize],
+}
+
+#[repr(C)]
 #[derive(Copy, Clone, Debug)]
 /// This structure is used for transferring encoding information from ODPI-C.
 pub struct ODPIEncodingInfo {
@@ -155,8 +234,8 @@ pub struct ODPIEncodingInfo {
     /// The encoding used for NCHAR data, as a null-terminated ASCII string.
     pub nchar_encoding: *const ::std::os::raw::c_char,
     /// The maximum number of bytes required for each character in the encoding used for NCHAR data.
-    /// Since this information is not directly available from Oracle it is only accurate if the 
-    /// encodings used for CHAR and NCHAR data are identical or one of ASCII or UTF-8; otherwise a 
+    /// Since this information is not directly available from Oracle it is only accurate if the
+    /// encodings used for CHAR and NCHAR data are identical or one of ASCII or UTF-8; otherwise a
     /// value of 4 is assumed. This value is used when calculating the size of buffers required when
     /// lengths in characters are provided.
     pub nchar_max_bytes_per_character: i32,
@@ -193,6 +272,34 @@ pub struct ODPIErrorInfo {
     /// A boolean value indicating if the error is recoverable. This member always has a value of 0
     /// unless both client and server are at release 12.1 or higher.
     pub is_recoverable: c_int,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
+/// This structure is used for passing interval (days to seconds) data to and from the database in
+/// the structure dpiData.
+pub struct ODPIIntervalDS {
+    /// Specifies the number of days in the interval.
+    pub days: i32,
+    /// Specifies the number of hours in the interval.
+    pub hours: i32,
+    /// Specifies the number of minutes in the interval.
+    pub minutes: i32,
+    /// Specifies the number of seconds in the interval.
+    pub seconds: i32,
+    /// Specifies the number of fractional seconds in the interval (in nanoseconds).
+    pub fseconds: i32,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
+/// This structure is used for passing interval (years to months) data to and from the database in
+// the structure dpiData.
+pub struct ODPIIntervalYM {
+    /// Specifies the number of years in the interval.
+    pub years: i32,
+    /// Specifies the number of months in the interval.
+    pub months: i32,
 }
 
 #[repr(C)]
@@ -372,6 +479,33 @@ pub struct ODPISubscrMessageTable {
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
+/// This structure is used for passing timestamp data to and from the database in the structure
+/// dpiData.
+pub struct ODPITimestamp {
+    /// Specifies the year for the timestamp.
+    pub year: i16,
+    /// Specifies the month for the timestamp. This should be between 1 and 12.
+    pub month: u8,
+    /// Specifies the day for the timestamp. This should be between 1 and 31.
+    pub day: u8,
+    /// Specifies the hour for the timestamp. This should be between 0 and 23.
+    pub hour: u8,
+    /// Specifies the minute for the timestamp. This should be between 0 and 59.
+    pub minute: u8,
+    /// Specifies the second for the timestamp. This should be between 0 and 59.
+    pub second: u8,
+    /// Specifies the fractional seconds for the timestamp, in nanoseconds.
+    pub fsecond: u32,
+    /// Specifies the hours offset from UTC. This value is only used for timestamp with time zone
+    /// and timestamp with local time zone columns.
+    pub tz_hour_offset: i8,
+    /// Specifies the minutes offset from UTC. This value is only used for timestamp with time zone
+    /// and timestamp with local time zone columns.
+    pub tz_minute_offset: i8,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
 /// This structure is used for returning Oracle version information about the Oracle Client.
 pub struct ODPIVersionInfo {
     /// Specifies the major version of the Oracle Client or Database.
@@ -387,4 +521,50 @@ pub struct ODPIVersionInfo {
     /// Specifies the full version (all five components) as a number that is suitable for
     /// comparison with the result of the macro DPI_ORACLE_VERSION_TO_NUMBER.
     pub full_version_num: u32,
+}
+
+#[repr(C)]
+/// Represents a C union struct field.
+pub struct UnionField<T>(::std::marker::PhantomData<T>);
+
+impl<T> UnionField<T> {
+    #[inline]
+    /// Create a new `UnionField` struct.
+    pub fn new() -> Self {
+        UnionField(::std::marker::PhantomData)
+    }
+}
+
+impl<T> ::std::convert::AsMut<T> for UnionField<T> {
+    fn as_mut(&mut self) -> &mut T {
+        unsafe { ::std::mem::transmute(self) }
+    }
+}
+
+impl<T> ::std::convert::AsRef<T> for UnionField<T> {
+    fn as_ref(&self) -> &T {
+        unsafe { ::std::mem::transmute(self) }
+    }
+}
+
+impl<T> ::std::default::Default for UnionField<T> {
+    #[inline]
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<T> ::std::clone::Clone for UnionField<T> {
+    #[inline]
+    fn clone(&self) -> Self {
+        Self::new()
+    }
+}
+
+impl<T> ::std::marker::Copy for UnionField<T> {}
+
+impl<T> ::std::fmt::Debug for UnionField<T> {
+    fn fmt(&self, fmt: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+        fmt.write_str("UnionField")
+    }
 }

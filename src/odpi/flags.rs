@@ -72,6 +72,40 @@ pub enum ODPIEventType {
     QueryChange = 7,
 }
 
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+/// This enumeration identifies the type of data that is being transferred to and from the database.
+pub enum ODPINativeTypeNum {
+    /// Data is passed as a 64-bit integer in the asInt64 member of dpiData.value.
+    Int64 = 3000,
+    /// Data is passed as an unsigned 64-bit integer in the asUint64 member of dpiData.value.
+    Uint64 = 3001,
+    /// Data is passed as a single precision floating point number in the asFloat member of
+    /// dpiData.value.
+    Float = 3002,
+    /// Data is passed as a double precision floating point number in the asDouble member of
+    /// dpiData.value.
+    Double = 3003,
+    /// Data is passed as a byte string in the asBytes member of dpiData.value.
+    Bytes = 3004,
+    /// Data is passed as a timestamp in the asTimestamp member of dpiData.value.
+    Timestamp = 3005,
+    /// Data is passed as an interval (days to seconds) in the asIntervalDS member of dpiData.value.
+    IntervalDS = 3006,
+    /// Data is passed as an interval (years to months) in the asIntervalYM member of dpiData.value.
+    IntervalYM = 3007,
+    /// Data is passed as a reference to a LOB in the asLOB member of dpiData.value.
+    Lob = 3008,
+    /// Data is passed as a reference to an object in the asObject member of dpiData.value.
+    Object = 3009,
+    /// Data is passed as a reference to a statement in the asStmt member of dpiData.value.
+    Stmt = 3010,
+    /// Data is passed as a boolean value in the asBoolean member of dpiData.value.
+    Boolean = 3011,
+    /// Data is passed as a reference to a rowid in the asRowid member of dpiData.value.
+    Rowid = 3012,
+}
+
 bitflags! {
     #[repr(C)]
     /// This enumeration identifies the types of operations that can take place during object change
@@ -98,6 +132,101 @@ bitflags! {
         /// An unknown operation has taken place.
         const DPI_OPCODE_UNKNOWN  = 0b01000000,
     }
+}
+
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+/// This enumeration identifies the types of Oracle data that can be used for binding data as
+/// arguments to a statement, fetching data from the database, or getting and setting object
+/// attributes and element values.
+pub enum ODPIOracleTypeNum {
+    /// None type.
+    None = 2000,
+    /// Default type used for VARCHAR2 columns in the database. Data is transferred to/from Oracle
+    /// as byte strings in the encoding used for CHAR data.
+    Varchar = 2001,
+    /// Default type used for NVARCHAR2 columns in the database. Data is transferred to/from Oracle
+    /// as byte strings in the encoding used for NCHAR data.
+    NVarchar = 2002,
+    /// Default type used for CHAR columns in the database. Data is transferred to/from Oracle as
+    /// byte strings in the encoding used for CHAR data.
+    Char = 2003,
+    /// Default type used for NCHAR columns in the database. Data is transferred to/from Oracle as
+    /// byte strings in the encoding used for NCHAR data.
+    NChar = 2004,
+    /// Default type used for the pseudocolumn "ROWID". Data is transferred to/from Oracle as byte
+    /// strings, in the encoding used for CHAR data.
+    RowID = 2005,
+    /// Default type used for RAW columns in the database. Data is transferred to/from Oracle as raw
+    /// byte strings.
+    Raw = 2006,
+    /// Default type used for BINARY_FLOAT columns in the database. Data is transferred to/from
+    /// Oracle as the C float type.
+    NativeFloat = 2007,
+    /// Default type used for BINARY_DOUBLE columns in the database. Data is transferred to/from
+    /// Oracle as the C double type.
+    NativeDouble = 2008,
+    /// Type available for binding native integers directly in PL/SQL (such as PLS_INTEGER). Data is
+    /// transferred to/from Oracle as 64-bit integers.
+    NativeInt = 2009,
+    /// Default type used for NUMBER columns in the database. Data is transferred to/from Oracle in
+    /// Oracle's internal format.
+    Number = 2010,
+    ///	Default type used for DATE columns in the database. Data is transferred to/from Oracle in
+    /// Oracle's internal format.
+    Date = 2011,
+    /// Default type used for TIMESTAMP columns in the database. Data is transferred to/from Oracle
+    /// in Oracle's internal format.
+    Timestamp = 2012,
+    /// Default type used for TIMESTAMP WITH TIME ZONE columns in the database. Data is transferred
+    /// to/from Oracle in Oracle's internal format.
+    TimestampTz = 2013,
+    /// Default type used for TIMESTAMP WITH LOCAL TIME ZONE columns in the database. Data is
+    /// transferred to/from Oracle in Oracle's internal format.
+    TimestampLtz = 2014,
+    /// Default type used for INTERVAL DAY TO SECOND columns in the database. Data is transferred
+    /// to/from Oracle in Oracle's internal format.
+    IntervalDS = 2015,
+    /// Default type used for INTERVAL YEAR TO MONTH columns in the database. Data is transferred
+    /// to/from Oracle in Oracle's internal format.
+    IntervalYM = 2016,
+    /// Default type used for CLOB columns in the database. Only a locator is transferred to/from
+    /// Oracle, which can subsequently be used via dpiLob references to read/write from that
+    /// locator.
+    Clob = 2017,
+    /// Default type used for NCLOB columns in the database. Only a locator is transferred to/from
+    /// Oracle, which can subsequently be used via dpiLob references to read/write from that
+    /// locator.
+    NClob = 2018,
+    /// Default type used for BLOB columns in the database. Only a locator is transferred to/from
+    /// Oracle, which can subsequently be used via dpiLob references to read/write from that
+    /// locator.
+    Blob = 2019,
+    /// Default type used for BFILE columns in the database. Only a locator is transferred to/from
+    /// Oracle, which can subsequently be used via dpiLob references to read/write from that
+    /// locator.
+    BFile = 2020,
+    /// Used within PL/SQL for REF CURSOR or within SQL for querying a CURSOR. Only a handle is
+    /// transferred to/from Oracle, which can subsequently be used via dpiStmt for querying.
+    Stmt = 2021,
+    /// Used within PL/SQL for boolean values. This is only available in 12.1. Earlier releases
+    /// simply use the integer values 0 and 1 to represent a boolean value. Data is transferred
+    /// to/from Oracle as an integer.
+    Boolean = 2022,
+    /// Default type used for named type columns in the database. Data is transferred to/from Oracle
+    /// in Oracle's internal format.
+    Object = 2023,
+    /// Default type used for LONG columns in the database. Data is transferred to/from Oracle as
+    /// byte strings in the encoding used for CHAR data.
+    LongVarchar = 2024,
+    /// Default type used for LONG RAW columns in the database. Data is transferred to/from Oracle
+    /// as raw byte strings.
+    LongRaw = 2025,
+    /// Type available for binding native integers directly in PL/SQL (such as PLS_INTEGER). Data is
+    /// transferred to/from Oracle as 64-bit unsigned integers.
+    NativeUint = 2026,
+    /// Max Type.
+    Max = 2027,
 }
 
 bitflags! {

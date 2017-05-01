@@ -6,7 +6,9 @@ use std::slice;
 /// Holds a pointer and a length for ODPI-C strings.
 #[derive(Clone, Copy, Debug)]
 pub struct ODPIStr {
+    /// A pointer to the head of the FFI string.
     ptr: *const c_char,
+    /// The length of the string.
     len: u32,
 }
 
