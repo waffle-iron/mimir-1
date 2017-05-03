@@ -160,6 +160,10 @@ error_chain! {
             description("Connection: call to ODPI-C function failed!")
             display("Connection: call to '{}' function failed!", fn_name)
         }
+        Context(fn_name: String) {
+            description("Context: call to ODPI-C function failed!")
+            display("Context: call to '{}' function failed!", fn_name)
+        }
         BranchId {
             description("The given batch id is longer than 64 bytes!")
             display("The given batch id is longer than 64 bytes!")

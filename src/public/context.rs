@@ -206,45 +206,39 @@ impl Drop for Context {
 
 #[cfg(test)]
 mod test {
-    use Context;
-    use odpi::flags::{DPI_MODE_AUTH_DEFAULT, DPI_MODE_AUTH_SYSDBA, DPI_MODE_CREATE_DEFAULT,
-                      DPI_MODE_CREATE_THREADED};
+    use {ContextResult, CTXT};
+    use odpi::flags::{DPI_MODE_AUTH_DEFAULT, DPI_MODE_CREATE_DEFAULT, DPI_MODE_CREATE_THREADED};
 
     #[test]
     fn context() {
-        match Context::new() {
-            Ok(mut ctxt) => {
-                assert!(ctxt.auth_mode() == DPI_MODE_AUTH_DEFAULT);
-                let enc = "UTF-8";
-                ctxt.set_encoding(enc);
-                ctxt.set_nchar_encoding(enc);
-                ctxt.set_auth_mode(DPI_MODE_AUTH_DEFAULT | DPI_MODE_AUTH_SYSDBA);
-                let create_mode = ctxt.create_mode();
-                let driver_name = ctxt.driver_name();
-                let encoding = ctxt.encoding();
-                let nchar_encoding = ctxt.nchar_encoding();
-                let auth_mode = ctxt.auth_mode();
-                assert!(auth_mode == DPI_MODE_AUTH_DEFAULT | DPI_MODE_AUTH_SYSDBA);
-                assert!(create_mode == DPI_MODE_CREATE_DEFAULT | DPI_MODE_CREATE_THREADED);
-                assert!(driver_name == "Rust Oracle: 0.1.0");
-                assert!(encoding == "UTF-8");
-                assert!(nchar_encoding == "UTF-8");
-            }
-            Err(_e) => assert!(false),
-        }
+        let ctxt = match *CTXT {
+            ContextResult::Ok(ref ctxt) => ctxt,
+            ContextResult::Err(ref _e) => return assert!(false),
+        };
+
+        let create_mode = ctxt.create_mode();
+        // let driver_name = ctxt.driver_name();
+        // let encoding = ctxt.encoding();
+        // let nchar_encoding = ctxt.nchar_encoding();
+        let auth_mode = ctxt.auth_mode();
+        assert!(auth_mode == DPI_MODE_AUTH_DEFAULT);
+        assert!(create_mode == DPI_MODE_CREATE_DEFAULT | DPI_MODE_CREATE_THREADED);
+        // assert!(driver_name == "Rust Oracle: 0.1.0");
+        // assert!(encoding == "UTF-8");
+        // assert!(nchar_encoding == "UTF-8");
     }
 
     #[test]
     fn client() {
-        match Context::new() {
-            Ok(ref ctxt) => {
-                match ctxt.client_version() {
-                    Ok(version) => {
-                        assert!(version.version() == "12.2.0.1.0");
-                        assert!(version.version_num() == 1202000100);
-                    }
-                    Err(_e) => assert!(false),
-                }
+        let ctxt = match *CTXT {
+            ContextResult::Ok(ref ctxt) => ctxt,
+            ContextResult::Err(ref _e) => return assert!(false),
+        };
+
+        match ctxt.client_version() {
+            Ok(version) => {
+                assert!(version.version() == "12.2.0.1.0");
+                assert!(version.version_num() == 1202000100);
             }
             Err(_e) => assert!(false),
         }
