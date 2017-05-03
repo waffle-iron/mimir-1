@@ -160,7 +160,7 @@ pub struct ODPIConnCreateParams {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy)]
 /// This structure is used for passing data to and from the database for variables and for
 /// manipulating object attributes and collection values.
 pub struct ODPIData {
@@ -171,54 +171,52 @@ pub struct ODPIData {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy)]
 /// Struct represention C union type for `ODPIData`.
-pub struct ODPIDataValueUnion {
-    /// Value that is used when dpiData.isNull is 0 and the native type that is being used is
-    /// DPI_NATIVE_TYPE_BOOLEAN. The value should be either 1 (true) or 0 (false).
-    pub as_boolean: UnionField<::std::os::raw::c_int>,
-    /// Value that is used when dpiData.isNull is 0 and the native type that is being used is
-    /// DPI_NATIVE_TYPE_INT64.
-    pub as_int_64: UnionField<i64>,
-    /// Value that is used when dpiData.isNull is 0 and the native type that is being used is
-    /// DPI_NATIVE_TYPE_UINT64.
-    pub as_uint_64: UnionField<u64>,
-    /// Value that is used when dpiData.isNull is 0 and the native type that is being used is
-    /// DPI_NATIVE_TYPE_FLOAT.
-    pub as_float: UnionField<f32>,
-    /// Value that is used when dpiData.isNull is 0 and the native type that is being used is
-    /// DPI_NATIVE_TYPE_DOUBLE.
-    pub as_double: UnionField<f64>,
-    /// Value that is used when dpiData.isNull is 0 and the native type that is being used is
-    /// DPI_NATIVE_TYPE_BYTES. This is a structure of type dpiBytes.
-    pub as_bytes: UnionField<ODPIBytes>,
-    /// Value that is used when dpiData.isNull is 0 and the native type that is being used is
-    /// DPI_NATIVE_TYPE_TIMESTAMP. This is a structure of type dpiTimestamp.
-    pub as_timestamp: UnionField<ODPITimestamp>,
-    /// Value that is used when dpiData.isNull is 0 and the native type that is being used is
-    /// DPI_NATIVE_TYPE_INTERVAL_DS. This is a structure of type dpiIntervalDS.
-    pub as_interval_ds: UnionField<ODPIIntervalDS>,
-    /// Value that is used when dpiData.isNull is 0 and the native type that is being used is
-    /// DPI_NATIVE_TYPE_INTERVAL_YM. This is a structure of type dpiIntervalYM.
-    pub as_interval_ym: UnionField<ODPIIntervalYM>,
-    /// Value that is used when dpiData.isNull is 0 and the native type that is being used is
-    /// DPI_NATIVE_TYPE_LOB. This is a reference to a LOB (large object) which can be used for
-    /// reading and writing the data that belongs to it.
-    pub as_lob: UnionField<*mut opaque::ODPILob>,
-    /// Value that is used when dpiData.isNull is 0 and the native type that is being used is
-    /// DPI_NATIVE_TYPE_OBJECT. This is a reference to an object which can be used for reading and
-    /// writing its attributes or element values.
-    pub as_object: UnionField<*mut opaque::ODPIObject>,
-    /// Value that is used when dpiData.isNull is 0 and the native type that is being used is
-    /// DPI_NATIVE_TYPE_STMT. This is a reference to a statement which can be used to query data
-    /// from the database.
-    pub as_stmt: UnionField<*mut opaque::ODPIStmt>,
-    /// Value that is used when dpiData.isNull is 0 and the native type that is being used is
-    /// DPI_NATIVE_TYPE_ROWID. This is a reference to a rowid which is used to uniquely identify a
-    /// row in a table in the database.
-    pub as_rowid: UnionField<*mut opaque::ODPIRowid>,
-    /// Union field value
-    pub bindgen_union_field: [u64; 3usize],
+pub union ODPIDataValueUnion {
+/// Value that is used when dpiData.isNull is 0 and the native type that is being used is
+/// DPI_NATIVE_TYPE_BOOLEAN. The value should be either 1 (true) or 0 (false).
+    pub as_boolean: ::std::os::raw::c_int,
+/// Value that is used when dpiData.isNull is 0 and the native type that is being used is
+/// DPI_NATIVE_TYPE_INT64.
+    pub as_int_64: i64,
+/// Value that is used when dpiData.isNull is 0 and the native type that is being used is
+/// DPI_NATIVE_TYPE_UINT64.
+    pub as_uint_64: u64,
+/// Value that is used when dpiData.isNull is 0 and the native type that is being used is
+/// DPI_NATIVE_TYPE_FLOAT.
+    pub as_float: f32,
+/// Value that is used when dpiData.isNull is 0 and the native type that is being used is
+/// DPI_NATIVE_TYPE_DOUBLE.
+    pub as_double: f64,
+/// Value that is used when dpiData.isNull is 0 and the native type that is being used is
+/// DPI_NATIVE_TYPE_BYTES. This is a structure of type dpiBytes.
+    pub as_bytes: ODPIBytes,
+/// Value that is used when dpiData.isNull is 0 and the native type that is being used is
+/// DPI_NATIVE_TYPE_TIMESTAMP. This is a structure of type dpiTimestamp.
+    pub as_timestamp: ODPITimestamp,
+/// Value that is used when dpiData.isNull is 0 and the native type that is being used is
+/// DPI_NATIVE_TYPE_INTERVAL_DS. This is a structure of type dpiIntervalDS.
+    pub as_interval_ds: ODPIIntervalDS,
+/// Value that is used when dpiData.isNull is 0 and the native type that is being used is
+/// DPI_NATIVE_TYPE_INTERVAL_YM. This is a structure of type dpiIntervalYM.
+    pub as_interval_ym: ODPIIntervalYM,
+/// Value that is used when dpiData.isNull is 0 and the native type that is being used is
+/// DPI_NATIVE_TYPE_LOB. This is a reference to a LOB (large object) which can be used for
+/// reading and writing the data that belongs to it.
+    pub as_lob: *mut opaque::ODPILob,
+/// Value that is used when dpiData.isNull is 0 and the native type that is being used is
+/// DPI_NATIVE_TYPE_OBJECT. This is a reference to an object which can be used for reading and
+/// writing its attributes or element values.
+    pub as_object: *mut opaque::ODPIObject,
+/// Value that is used when dpiData.isNull is 0 and the native type that is being used is
+/// DPI_NATIVE_TYPE_STMT. This is a reference to a statement which can be used to query data
+/// from the database.
+    pub as_stmt: *mut opaque::ODPIStmt,
+/// Value that is used when dpiData.isNull is 0 and the native type that is being used is
+/// DPI_NATIVE_TYPE_ROWID. This is a reference to a rowid which is used to uniquely identify a
+/// row in a table in the database.
+    pub as_rowid: *mut opaque::ODPIRowid,
 }
 
 #[repr(C)]
@@ -351,6 +349,48 @@ pub struct ODPIPoolCreateParams {
     /// dpiPool_create(). It is the length of the dpiPoolCreateParams.outPoolName member, in bytes.
     /// Any value specified prior to creating the session pool is ignored.
     pub out_pool_name_length: u32,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
+/// This structure is used for passing query metadata from ODPI-C. It is populated by the function
+/// `dpiStmt_getQueryInfo()`. All values remain valid as long as a reference is held to the
+/// statement and the statement is not re-executed or closed.
+pub struct ODPIQueryInfo {
+    /// Specifies the name of the column which is being queried, as a byte string in the encoding
+    /// used for CHAR data.
+    pub name: *const ::std::os::raw::c_char,
+    /// Specifies the length of the dpiQueryInfo.name member, in bytes.
+    pub name_length: u32,
+    /// Specifies the type of the column that is being queried. It will be one of the values from
+    /// the enumeration `ODPIOracleTypeNum`.
+    pub oracle_type_num: flags::ODPIOracleTypeNum,
+    /// Specifies the default native type for the column that is being queried. It will be one of
+    /// the values from the enumeration `ODPINativeTypeNum`.
+    pub default_native_type_num: flags::ODPINativeTypeNum,
+    /// Specifies the size in bytes (from the database's perspective) of the column that is being
+    /// queried. This value is only populated for strings and binary columns. For all other columns
+    /// the value is zero.
+    pub db_size_in_bytes: u32,
+    /// Specifies the size in bytes (from the client's perspective) of the column that is being
+    /// queried. This value is only populated for strings and binary columns. For all other columns
+    /// the value is zero.
+    pub client_size_in_bytes: u32,
+    /// Specifies the size in characters of the column that is being queried. This value is only
+    /// populated for string columns. For all other columns the value is zero.
+    pub size_in_chars: u32,
+    /// Specifies the precision of the column that is being queried. This value is only populated
+    /// for numeric and timestamp columns. For all other columns the value is zero.
+    pub precision: i16,
+    /// Specifies the scale of the column that is being queried. This value is only populated for
+    /// numeric columns. For all other columns the value is zero.
+    pub scale: i8,
+    /// Specifies if the column that is being queried may return null values (1) or not (0).
+    pub null_ok: ::std::os::raw::c_int,
+    /// Specifies a reference to the type of the object that is being queried. This value is only
+    /// populated for named type columns. For all other columns the value is NULL. The reference
+    /// that is returned must be released when it is no longer needed.
+    pub object_type: *mut opaque::ODPIObjectType,
 }
 
 #[repr(C)]
@@ -506,7 +546,7 @@ pub struct ODPITimestamp {
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
-/// This structure is used for returning Oracle version information about the Oracle Client.
+/// This structure is used for returning information about the Oracle Client.
 pub struct ODPIVersionInfo {
     /// Specifies the major version of the Oracle Client or Database.
     pub version_num: c_int,
@@ -521,50 +561,4 @@ pub struct ODPIVersionInfo {
     /// Specifies the full version (all five components) as a number that is suitable for
     /// comparison with the result of the macro DPI_ORACLE_VERSION_TO_NUMBER.
     pub full_version_num: u32,
-}
-
-#[repr(C)]
-/// Represents a C union struct field.
-pub struct UnionField<T>(::std::marker::PhantomData<T>);
-
-impl<T> UnionField<T> {
-    #[inline]
-    /// Create a new `UnionField` struct.
-    pub fn new() -> Self {
-        UnionField(::std::marker::PhantomData)
-    }
-}
-
-impl<T> ::std::convert::AsMut<T> for UnionField<T> {
-    fn as_mut(&mut self) -> &mut T {
-        unsafe { ::std::mem::transmute(self) }
-    }
-}
-
-impl<T> ::std::convert::AsRef<T> for UnionField<T> {
-    fn as_ref(&self) -> &T {
-        unsafe { ::std::mem::transmute(self) }
-    }
-}
-
-impl<T> ::std::default::Default for UnionField<T> {
-    #[inline]
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<T> ::std::clone::Clone for UnionField<T> {
-    #[inline]
-    fn clone(&self) -> Self {
-        Self::new()
-    }
-}
-
-impl<T> ::std::marker::Copy for UnionField<T> {}
-
-impl<T> ::std::fmt::Debug for UnionField<T> {
-    fn fmt(&self, fmt: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        fmt.write_str("UnionField")
-    }
 }

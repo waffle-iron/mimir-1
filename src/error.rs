@@ -1,5 +1,8 @@
 //! `oci` errors
 use odpi::externs::dpiContext_getError;
+#[cfg(test)]
+#[allow(dead_code)]
+use odpi::opaque::ODPIContext;
 use odpi::structs::ODPIErrorInfo;
 use public::context::Context;
 use std::ffi::CStr;
@@ -126,7 +129,7 @@ fn from_dpi_error_info(err: &ODPIErrorInfo) -> ErrorKind {
     }
 }
 
-/// Create an `ErrorKind` from an ODPI-C error.
+/// Create an `ErrorKind` from a `Context` struct.
 pub fn from_dpi_context(ctxt: &Context) -> ErrorKind {
     unsafe {
         let mut err = mem::uninitialized::<ODPIErrorInfo>();
@@ -135,10 +138,21 @@ pub fn from_dpi_context(ctxt: &Context) -> ErrorKind {
     }
 }
 
+/// Create an `ErrorKind` from and ODPI-C error.
+#[cfg(test)]
+#[allow(dead_code)]
+pub fn from_odpi_context(ctxt: *mut ODPIContext) -> ErrorKind {
+    unsafe {
+        let mut err = mem::uninitialized::<ODPIErrorInfo>();
+        dpiContext_getError(ctxt, &mut err);
+        from_dpi_error_info(&err)
+    }
+}
+
 error_chain! {
     foreign_links {
         Nul(::std::ffi::NulError);
-        Var(::std::env::VarError);
+        EnvVar(::std::env::VarError);
     }
 
     errors {
@@ -162,9 +176,17 @@ error_chain! {
             description("OCI Error!")
             display("OCI Error! {}", err)
         }
+        Statement(fn_name: String) {
+            description("Statement: call to ODPI-C function failed!")
+            display("Statement: call to '{}' function failed!", fn_name)
+        }
         TxnId {
             description("The given transaction id is longer than 64 bytes!")
             display("The given transaction id is longer than 64 bytes!")
+        }
+        Var(fn_name: String) {
+            description("Var: call to ODPI-C function failed!")
+            display("Var: call to '{}' function failed!", fn_name)
         }
     }
 }

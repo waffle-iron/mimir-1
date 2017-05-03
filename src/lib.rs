@@ -8,6 +8,8 @@ extern crate bitflags;
 #[macro_use]
 extern crate error_chain;
 #[macro_use]
+extern crate lazy_static;
+#[macro_use]
 extern crate slog;
 #[macro_use]
 mod macros;
@@ -21,9 +23,9 @@ mod msgprops;
 mod object;
 mod odpi;
 mod util;
-pub mod version;
 
 pub use error::from_dpi_context;
 pub use public::connection::Connection;
 pub use public::context::Context;
+pub use public::statement::Statement;
 pub use public::VersionInfo;

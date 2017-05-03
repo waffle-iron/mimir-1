@@ -92,3 +92,61 @@ macro_rules! try_crit(
         }
     }
 );
+
+macro_rules! with_conn {
+    ($tst:pat => $b:expr) => {{
+        match Context::new() {
+            Ok(ref mut ctxt) => {
+                ctxt.set_encoding("UTF-8");
+                ctxt.set_nchar_encoding("UTF-8");
+                match Connection::connect(ctxt,
+                                        Some("jozias"),
+                                        Some("chip18jj"),
+                                        "//oic.cbsnae86d3iv.us-east-2.rds.amazonaws.com/ORCL") {
+                    $tst => { $b }
+                    Err(_e) => {
+                        use std::io::{self, Write};
+                        writeln!(io::stderr(), "{}", error::from_dpi_context(ctxt))
+                            .expect("badness");
+                        assert!(false)
+                    }
+                }
+            }
+            Err(_e) => assert!(false),
+        }
+    }}
+}
+
+macro_rules! with_stmt {
+    ($tst:pat => $b:expr; $stmt:expr) => {{
+        match Context::new() {
+            Ok(ref mut ctxt) => {
+                ctxt.set_encoding("UTF-8");
+                ctxt.set_nchar_encoding("UTF-8");
+                match Connection::connect(ctxt,
+                                        Some("jozias"),
+                                        Some("chip18jj"),
+                                        "//oic.cbsnae86d3iv.us-east-2.rds.amazonaws.com/ORCL") {
+                    Ok(conn) => {
+                        match conn.prepare_stmt($stmt, None, false) {
+                            $tst => { $b }
+                            Err(_e) => {
+                                use std::io::{self, Write};
+                                writeln!(io::stderr(), "{}", error::from_dpi_context(ctxt))
+                                    .expect("badness");
+                                assert!(false)
+                            }
+                        }
+                    }
+                    Err(_e) => {
+                        use std::io::{self, Write};
+                        writeln!(io::stderr(), "{}", error::from_dpi_context(ctxt))
+                            .expect("badness");
+                        assert!(false)
+                    }
+                }
+            }
+            Err(_e) => assert!(false),
+        }
+    }}
+}

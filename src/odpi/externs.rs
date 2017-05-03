@@ -209,3 +209,75 @@ extern "C" {
                                    mode: flags::ODPIStartupMode)
                                    -> ::std::os::raw::c_int;
 }
+
+extern "C" {
+    pub fn dpiStmt_addRef(stmt: *mut opaque::ODPIStmt) -> ::std::os::raw::c_int;
+    pub fn dpiStmt_bindByName(stmt: *mut opaque::ODPIStmt,
+                              name: *const ::std::os::raw::c_char,
+                              nameLength: u32,
+                              var: *mut opaque::ODPIVar)
+                              -> ::std::os::raw::c_int;
+    pub fn dpiStmt_bindByPos(stmt: *mut opaque::ODPIStmt,
+                             pos: u32,
+                             var: *mut opaque::ODPIVar)
+                             -> ::std::os::raw::c_int;
+    pub fn dpiStmt_bindValueByName(stmt: *mut opaque::ODPIStmt,
+                                   name: *const ::std::os::raw::c_char,
+                                   nameLength: u32,
+                                   nativeTypeNum: flags::ODPINativeTypeNum,
+                                   data: *mut structs::ODPIData)
+                                   -> ::std::os::raw::c_int;
+    pub fn dpiStmt_bindValueByPos(stmt: *mut opaque::ODPIStmt,
+                                  pos: u32,
+                                  nativeTypeNum: flags::ODPINativeTypeNum,
+                                  data: *mut structs::ODPIData)
+                                  -> ::std::os::raw::c_int;
+    pub fn dpiStmt_close(stmt: *mut opaque::ODPIStmt,
+                         tag: *const ::std::os::raw::c_char,
+                         tagLength: u32)
+                         -> ::std::os::raw::c_int;
+    pub fn dpiStmt_execute(stmt: *mut opaque::ODPIStmt,
+                           mode: flags::ODPIExecMode,
+                           numQueryColumns: *mut u32)
+                           -> ::std::os::raw::c_int;
+
+    pub fn dpiStmt_fetch(stmt: *mut opaque::ODPIStmt,
+                         found: *mut ::std::os::raw::c_int,
+                         bufferRowIndex: *mut u32)
+                         -> ::std::os::raw::c_int;
+
+    pub fn dpiStmt_getQueryInfo(stmt: *mut opaque::ODPIStmt,
+                                pos: u32,
+                                info: *mut structs::ODPIQueryInfo)
+                                -> ::std::os::raw::c_int;
+    pub fn dpiStmt_getQueryValue(stmt: *mut opaque::ODPIStmt,
+                                 pos: u32,
+                                 nativeTypeNum: *mut ::std::os::raw::c_int,
+                                 data: *mut *mut structs::ODPIData)
+                                 -> ::std::os::raw::c_int;
+}
+
+extern "C" {
+    pub fn dpiVar_addRef(var: *mut opaque::ODPIVar) -> ::std::os::raw::c_int;
+    pub fn dpiVar_copyData(var: *mut opaque::ODPIVar,
+                           pos: u32,
+                           sourceVar: *mut opaque::ODPIVar,
+                           sourcePos: u32)
+                           -> ::std::os::raw::c_int;
+    pub fn dpiVar_getData(var: *mut opaque::ODPIVar,
+                          numElements: *mut u32,
+                          data: *mut *mut structs::ODPIData)
+                          -> ::std::os::raw::c_int;
+    pub fn dpiVar_getNumElementsInArray(var: *mut opaque::ODPIVar,
+                                        numElements: *mut u32)
+                                        -> ::std::os::raw::c_int;
+    pub fn dpiVar_getSizeInBytes(var: *mut opaque::ODPIVar,
+                                 sizeInBytes: *mut u32)
+                                 -> ::std::os::raw::c_int;
+    pub fn dpiVar_release(var: *mut opaque::ODPIVar) -> ::std::os::raw::c_int;
+}
+
+extern "C" {
+    pub fn dpiData_getBytes(data: *mut structs::ODPIData) -> *mut structs::ODPIBytes;
+    pub fn dpiData_getDouble(data: *mut structs::ODPIData) -> f64;
+}

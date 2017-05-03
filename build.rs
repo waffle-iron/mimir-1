@@ -9,7 +9,7 @@ fn main() {
     let out_dir = env::var("OUT_DIR").unwrap();
     let _ = bindgen::builder()
         .header("odpi/include/dpi.h")
-        .no_unstable_rust()
+        .use_core()
         .generate()
         .unwrap()
         .write_to_file(path::Path::new(&out_dir).join("bindings.rs"));

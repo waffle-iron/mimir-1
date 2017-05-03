@@ -8,7 +8,8 @@ use odpi::externs;
 use odpi::flags::{self, ODPIAuthMode, ODPICreateMode};
 use odpi::opaque::ODPIContext;
 use odpi::structs::{ODPICommonCreateParams, ODPIConnCreateParams, ODPIErrorInfo,
-                    ODPIPoolCreateParams, ODPISubscrCreateParams};
+                    ODPIPoolCreateParams, ODPISubscrCreateParams, ODPIVersionInfo};
+use public::VersionInfo;
 use slog::Logger;
 use std::{env, ptr};
 use std::ffi::CStr;
@@ -183,6 +184,14 @@ impl Context {
         self.common_create_params.nchar_encoding = nt_enc.as_ptr() as *const c_char;
         self
     }
+
+    /// Return information about the version of the Oracle Client that is being used.
+    pub fn client_version(&self) -> Result<VersionInfo> {
+        let mut version_info = unsafe { mem::uninitialized::<ODPIVersionInfo>() };
+        try_dpi!(externs::dpiContext_getClientVersion(self.context, &mut version_info),
+                 Ok(version_info.into()),
+                 ErrorKind::Connection("dpiContext_getClientVersion".to_string()))
+    }
 }
 
 impl Drop for Context {
@@ -220,6 +229,22 @@ mod test {
                 assert!(driver_name == "Rust Oracle: 0.1.0");
                 assert!(encoding == "UTF-8");
                 assert!(nchar_encoding == "UTF-8");
+            }
+            Err(_e) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn client() {
+        match Context::new() {
+            Ok(ref ctxt) => {
+                match ctxt.client_version() {
+                    Ok(version) => {
+                        assert!(version.version() == "12.2.0.1.0");
+                        assert!(version.version_num() == 1202000100);
+                    }
+                    Err(_e) => assert!(false),
+                }
             }
             Err(_e) => assert!(false),
         }

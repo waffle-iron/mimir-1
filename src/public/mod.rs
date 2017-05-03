@@ -2,6 +2,8 @@
 pub mod connection;
 pub mod context;
 pub mod data;
+pub mod statement;
+pub mod variable;
 
 use odpi::structs::ODPIVersionInfo;
 
@@ -11,6 +13,8 @@ pub struct VersionInfo {
     version: String,
     /// The version number.
     version_num: u32,
+    /// The release string.
+    release: Option<String>,
 }
 
 impl VersionInfo {
@@ -22,6 +26,21 @@ impl VersionInfo {
     /// Get the `version_num` value.
     pub fn version_num(&self) -> u32 {
         self.version_num
+    }
+
+    /// Get the `release` value.
+    pub fn release(&self) -> &str {
+        if let Some(ref release) = self.release {
+            release
+        } else {
+            ""
+        }
+    }
+
+    /// Set the `release` value.
+    pub fn set_release(&mut self, release: Option<String>) -> &mut VersionInfo {
+        self.release = release;
+        self
     }
 }
 
@@ -36,6 +55,7 @@ impl From<ODPIVersionInfo> for VersionInfo {
         VersionInfo {
             version: version,
             version_num: ovi.full_version_num,
+            release: None,
         }
 
     }

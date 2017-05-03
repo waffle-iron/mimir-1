@@ -3,15 +3,18 @@
 //! the function `acquire`. They can be closed by calling the function `close` or releasing the last
 //! reference to the connection by calling the function `release`. Connection handles are used to
 //! create all handles other than session pools and context handles.
-use public::context::Context;
 use deqopts::DeqOptions;
 use enqopts::EnqOptions;
 use error::{ErrorKind, Result};
 use msgprops::MsgProps;
 use object::Object;
 use odpi::{externs, flags};
-use odpi::opaque::{ODPIConn, ODPIContext};
+use odpi::opaque::ODPIConn;
 use odpi::structs::{ODPIEncodingInfo, ODPISubscrCreateParams, ODPIVersionInfo};
+use public::VersionInfo;
+use public::context::Context;
+use public::statement::Statement;
+use public::variable::Var;
 use std::mem;
 use std::ptr;
 use util::{self, ODPIStr};
@@ -213,11 +216,11 @@ impl Connection {
     }
 
     /// Returns the OCI service context handle in use by the connection.
-    pub fn handle(&self) -> Result<ODPIContext> {
+    pub fn handle(&self) -> Result<*mut ::std::os::raw::c_void> {
         let mut pdst = ptr::null_mut();
 
         try_dpi!(externs::dpiConn_getHandle(self.conn, &mut pdst),
-                 Ok(unsafe { *(pdst as *mut ODPIContext) }),
+                 Ok(pdst),
                  ErrorKind::Connection("dpiConn_getHandle".to_string()))
     }
 
@@ -257,7 +260,7 @@ impl Connection {
 
     /// Returns the version information of the Oracle Database to which the connection has been
     /// made.
-    pub fn server_version(&self) -> Result<(String, u32, String)> {
+    pub fn server_version(&self) -> Result<VersionInfo> {
         let mut pdst = ptr::null();
         let mut dstlen = 0;
         let mut version_info = unsafe { mem::uninitialized::<ODPIVersionInfo>() };
@@ -267,15 +270,10 @@ impl Connection {
                                                    &mut dstlen,
                                                    &mut version_info),
                  {
-                     let ver_str = format!("{}.{}.{}.{}.{}",
-                                           version_info.version_num,
-                                           version_info.release_num,
-                                           version_info.update_num,
-                                           version_info.port_release_num,
-                                           version_info.port_update_num);
-                     let ver_desc = ODPIStr::new(pdst, dstlen).into();
-                     let ver_num = version_info.full_version_num;
-                     Ok((ver_str, ver_num, ver_desc))
+                     let mut ver_info: VersionInfo = version_info.into();
+                     let release_s = ODPIStr::new(pdst, dstlen);
+                     ver_info.set_release(Some(release_s.into()));
+                     Ok(ver_info)
                  },
                  ErrorKind::Connection("dpiConn_getServerVersion".to_string()))
     }
@@ -360,24 +358,31 @@ impl Connection {
     /// soon as it is no longer needed.
     pub fn new_var(&self,
                    oracle_type_num: flags::ODPIOracleTypeNum,
-                   native_type_num: flags::ODPINativeTypeNum)
-                   -> Result<()> {
+                   native_type_num: flags::ODPINativeTypeNum,
+                   max_array_size: u32,
+                   size: u32,
+                   size_is_bytes: bool,
+                   is_array: bool)
+                   -> Result<Var> {
         let mut var_ptr = ptr::null_mut();
         let mut data_ptr = ptr::null_mut();
         let object_type = ptr::null_mut();
 
-        /// TODO: This function is incomplete.
+        let sib = if size_is_bytes { 0 } else { 1 };
+        let ia = if is_array { 0 } else { 1 };
+
+        /// TODO: Fix object_type when Object is implemented fully.
         try_dpi!(externs::dpiConn_newVar(self.conn,
                                          oracle_type_num,
                                          native_type_num,
-                                         0,
-                                         0,
-                                         0,
-                                         0,
+                                         max_array_size,
+                                         size,
+                                         sib,
+                                         ia,
                                          object_type,
                                          &mut var_ptr,
                                          &mut data_ptr),
-                 Ok(()),
+                 Ok(Var::new(var_ptr, data_ptr, max_array_size)),
                  ErrorKind::Connection("dpiConn_newVar".to_string()))
     }
 
@@ -399,7 +404,11 @@ impl Connection {
 
     /// Returns a reference to a statement prepared for execution. The reference should be released
     /// as soon as it is no longer needed.
-    pub fn prepare_stmt(&self, sql: &str, tag: Option<&str>, scrollable: bool) -> Result<()> {
+    pub fn prepare_stmt(&self,
+                        sql: &str,
+                        tag: Option<&str>,
+                        scrollable: bool)
+                        -> Result<Statement> {
         let sql_s = ODPIStr::from(sql);
         let tag_s = ODPIStr::from(tag);
         let scroll_i = if scrollable { 0 } else { 1 };
@@ -412,7 +421,7 @@ impl Connection {
                                               tag_s.ptr(),
                                               tag_s.len(),
                                               &mut stmt_ptr),
-                 Ok(()),
+                 Ok(Statement::new(stmt_ptr)),
                  ErrorKind::Connection("dpiConn_prepareStmt".to_string()))
     }
 
@@ -555,30 +564,8 @@ mod test {
     use Connection;
     use error;
     use odpi::flags::ODPIConnCloseMode::*;
-
-    macro_rules! with_conn {
-        ($tst:pat => $b:expr) => {{
-            match Context::new() {
-                Ok(ref mut ctxt) => {
-                    ctxt.set_encoding("UTF-8");
-                    ctxt.set_nchar_encoding("UTF-8");
-                    match Connection::connect(ctxt,
-                                            Some("jozias"),
-                                            Some("chip18jj"),
-                                            "//localhost/ORCL") {
-                        $tst => { $b }
-                        Err(_e) => {
-                            use std::io::{self, Write};
-                            writeln!(io::stderr(), "{}", error::from_dpi_context(ctxt))
-                                .expect("badness");
-                            assert!(false)
-                        }
-                    }
-                }
-                Err(_e) => assert!(false),
-            }
-        }}
-    }
+    use odpi::flags::ODPINativeTypeNum::*;
+    use odpi::flags::ODPIOracleTypeNum::*;
 
     #[test]
     fn connect() {
@@ -656,10 +643,10 @@ mod test {
     fn server_version() {
         with_conn!(Ok(conn) => {
             match conn.server_version() {
-                Ok((ver, ver_num, ver_desc)) => {
-                    assert!(ver == "12.1.0.2.0");
-                    assert!(ver_num == 1201000200);
-                    assert!(ver_desc ==
+                Ok(version_info) => {
+                    assert!(version_info.version() == "12.1.0.2.0");
+                    assert!(version_info.version_num() == 1201000200);
+                    assert!(version_info.release() ==
                             "Oracle Database 12c Standard Edition Release 12.1.0.2.0 - \
                             64bit Production");
                 }
@@ -754,6 +741,34 @@ mod test {
                 Err(_e) => assert!(false),
             }
             let _ = conn.close(DefaultClose, None);
+        })
+    }
+
+    #[test]
+    fn new_var() {
+        with_conn!(Ok(conn) => {
+            match conn.new_var(Varchar, Bytes, 5, 256, false, false) {
+                Ok(var) => {
+                    if let Ok(sib) = var.get_size_in_bytes() {
+                        assert!(sib == 256);
+                    } else {
+                        assert!(false);
+                    }
+
+                    if let Ok(ne) = var.get_num_elements() {
+                        assert!(ne == 0);
+                    } else {
+                        assert!(false);
+                    }
+
+                    if let Ok(ne) = var.get_data() {
+                        assert!(ne == 5);
+                    } else {
+                        assert!(false);
+                    }
+                },
+                Err(_e) => assert!(false),
+            }
         })
     }
 }

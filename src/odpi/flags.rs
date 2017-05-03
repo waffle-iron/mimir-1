@@ -72,6 +72,29 @@ pub enum ODPIEventType {
     QueryChange = 7,
 }
 
+bitflags! {
+    #[repr(C)]
+    /// This enumeration identifies the mode to use when creating connections to the database. Note
+    /// that the OCI objects mode is always enabled.
+    pub flags ODPIExecMode: u32 {
+        /// Default mode for execution. Metadata is made available after queries are executed.
+        const EXEC_DEFAULT        = 0x0,
+        /// Do not execute the statement but simply acquire the metadata for the query.
+        const DESCRIBE_ONLY       = 0x10,
+        /// If execution completes successfully, the current active transaction is committed.
+        const COMMIT_ON_SUCCESS   = 0x20,
+        /// Enable batch error mode. This permits an an array DML operation to succeed even if some
+        /// of the individual operations fail. The errors can be retrieved using the function
+        /// `dpiStmt_getBatchErrors()`.
+        const BATCH_ERRORS        = 0x80,
+        /// Do not execute the statement but only parse it and return any parse errors.
+        const PARSE_ONLY          = 0x100,
+        /// Enable getting row counts for each DML operation when performing an array DML execution.
+        /// The actual row counts can be retrieved using the function `dpiStmt_getRowCounts()`.
+        const ARRAY_DML_ROWCOUNTS = 0x100000,
+    }
+}
+
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 /// This enumeration identifies the type of data that is being transferred to and from the database.
@@ -141,7 +164,7 @@ bitflags! {
 /// attributes and element values.
 pub enum ODPIOracleTypeNum {
     /// None type.
-    None = 2000,
+    TypeNone = 2000,
     /// Default type used for VARCHAR2 columns in the database. Data is transferred to/from Oracle
     /// as byte strings in the encoding used for CHAR data.
     Varchar = 2001,
@@ -262,7 +285,7 @@ bitflags! {
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 /// This enumeration identifies the mode to use when shutting down a database using
-/// dpiConn_shutdownDatabase().
+/// `dpiConn_shutdownDatabase()`.
 pub enum ODPIShutdownMode {
     /// Further connections to the database are prohibited. Wait for users to disconnect from the
     /// database.
@@ -286,7 +309,7 @@ pub enum ODPIShutdownMode {
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 /// This enumeration identifies the mode to use when starting up a database using
-/// dpiConn_startupDatabase().
+/// `dpiConn_startupDatabase()`.
 pub enum ODPIStartupMode {
     /// Default mode for startup which permits database access to all users.
     Def = 0,
