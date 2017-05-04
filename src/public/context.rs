@@ -204,43 +204,43 @@ impl Drop for Context {
     }
 }
 
-#[cfg(test)]
-mod test {
-    use {ContextResult, CTXT};
-    use odpi::flags::{DPI_MODE_AUTH_DEFAULT, DPI_MODE_CREATE_DEFAULT, DPI_MODE_CREATE_THREADED};
+// #[cfg(test)]
+// mod test {
+//     use {ContextResult, CTXT};
+//     use odpi::flags::{DPI_MODE_AUTH_DEFAULT, DPI_MODE_CREATE_DEFAULT, DPI_MODE_CREATE_THREADED};
 
-    #[test]
-    fn context() {
-        let ctxt = match *CTXT {
-            ContextResult::Ok(ref ctxt) => ctxt,
-            ContextResult::Err(ref _e) => return assert!(false),
-        };
+//     #[test]
+//     fn context() {
+//         let ctxt = match *CTXT {
+//             ContextResult::Ok(ref ctxt) => ctxt,
+//             ContextResult::Err(ref _e) => return assert!(false),
+//         };
 
-        let create_mode = ctxt.create_mode();
-        // let driver_name = ctxt.driver_name();
-        // let encoding = ctxt.encoding();
-        // let nchar_encoding = ctxt.nchar_encoding();
-        let auth_mode = ctxt.auth_mode();
-        assert!(auth_mode == DPI_MODE_AUTH_DEFAULT);
-        assert!(create_mode == DPI_MODE_CREATE_DEFAULT | DPI_MODE_CREATE_THREADED);
-        // assert!(driver_name == "Rust Oracle: 0.1.0");
-        // assert!(encoding == "UTF-8");
-        // assert!(nchar_encoding == "UTF-8");
-    }
+//         let create_mode = ctxt.create_mode();
+//         // let driver_name = ctxt.driver_name();
+//         // let encoding = ctxt.encoding();
+//         // let nchar_encoding = ctxt.nchar_encoding();
+//         let auth_mode = ctxt.auth_mode();
+//         assert!(auth_mode == DPI_MODE_AUTH_DEFAULT);
+//         assert!(create_mode == DPI_MODE_CREATE_DEFAULT | DPI_MODE_CREATE_THREADED);
+//         // assert!(driver_name == "Rust Oracle: 0.1.0");
+//         // assert!(encoding == "UTF-8");
+//         // assert!(nchar_encoding == "UTF-8");
+//     }
 
-    #[test]
-    fn client() {
-        let ctxt = match *CTXT {
-            ContextResult::Ok(ref ctxt) => ctxt,
-            ContextResult::Err(ref _e) => return assert!(false),
-        };
+//     #[test]
+//     fn client() {
+//         let ctxt = match *CTXT {
+//             ContextResult::Ok(ref ctxt) => ctxt,
+//             ContextResult::Err(ref _e) => return assert!(false),
+//         };
 
-        match ctxt.client_version() {
-            Ok(version) => {
-                assert!(version.version() == "12.2.0.1.0");
-                assert!(version.version_num() == 1202000100);
-            }
-            Err(_e) => assert!(false),
-        }
-    }
-}
+//         match ctxt.client_version() {
+//             Ok(version) => {
+//                 assert!(version.version() == "12.2.0.1.0");
+//                 assert!(version.version_num() == 1202000100);
+//             }
+//             Err(_e) => assert!(false),
+//         }
+//     }
+// }

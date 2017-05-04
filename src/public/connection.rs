@@ -558,211 +558,211 @@ impl Connection {
     }
 }
 
-#[cfg(test)]
-mod test {
-    use {ConnResult, CONN};
-    use odpi::flags::ODPINativeTypeNum::*;
-    use odpi::flags::ODPIOracleTypeNum::*;
+// #[cfg(test)]
+// mod test {
+//     use {ConnResult, CONN};
+//     use odpi::flags::ODPINativeTypeNum::*;
+//     use odpi::flags::ODPIOracleTypeNum::*;
 
-    #[test]
-    fn add_ref() {
-        let conn = match *CONN {
-            ConnResult::Ok(ref conn) => conn,
-            ConnResult::Err(ref _e) => return assert!(false),
-        };
-        match conn.add_ref() {
-            Ok(_) => assert!(true),
-            Err(_e) => assert!(false),
-        }
-    }
+//     #[test]
+//     fn add_ref() {
+//         let conn = match *CONN {
+//             ConnResult::Ok(ref conn) => conn,
+//             ConnResult::Err(ref _e) => return assert!(false),
+//         };
+//         match conn.add_ref() {
+//             Ok(_) => assert!(true),
+//             Err(_e) => assert!(false),
+//         }
+//     }
 
-    #[test]
-    fn current_schema() {
-        let conn = match *CONN {
-            ConnResult::Ok(ref conn) => conn,
-            ConnResult::Err(ref _e) => return assert!(false),
-        };
-        match conn.set_current_schema("jozias") {
-            Ok(_) => {
-                match conn.current_schema() {
-                    Ok(schema) => assert!(schema == "jozias"),
-                    Err(_e) => assert!(false),
-                }
-            }
-            Err(_e) => assert!(false),
-        }
-    }
+//     #[test]
+//     fn current_schema() {
+//         let conn = match *CONN {
+//             ConnResult::Ok(ref conn) => conn,
+//             ConnResult::Err(ref _e) => return assert!(false),
+//         };
+//         match conn.set_current_schema("jozias") {
+//             Ok(_) => {
+//                 match conn.current_schema() {
+//                     Ok(schema) => assert!(schema == "jozias"),
+//                     Err(_e) => assert!(false),
+//                 }
+//             }
+//             Err(_e) => assert!(false),
+//         }
+//     }
 
-    #[test]
-    fn edition() {
-        let conn = match *CONN {
-            ConnResult::Ok(ref conn) => conn,
-            ConnResult::Err(ref _e) => return assert!(false),
-        };
-        match conn.edition() {
-            Ok(_edition) => assert!(true),
-            Err(_e) => assert!(false),
-        }
-    }
+//     #[test]
+//     fn edition() {
+//         let conn = match *CONN {
+//             ConnResult::Ok(ref conn) => conn,
+//             ConnResult::Err(ref _e) => return assert!(false),
+//         };
+//         match conn.edition() {
+//             Ok(_edition) => assert!(true),
+//             Err(_e) => assert!(false),
+//         }
+//     }
 
-    #[test]
-    fn external_name() {
-        let conn = match *CONN {
-            ConnResult::Ok(ref conn) => conn,
-            ConnResult::Err(ref _e) => return assert!(false),
-        };
-        match conn.set_external_name("foobar") {
-            Ok(_) => {
-                match conn.external_name() {
-                    Ok(ext_name) => assert!(ext_name == "foobar"),
-                    Err(_e) => assert!(false),
-                }
-            }
-            Err(_e) => assert!(false),
-        }
-    }
+//     #[test]
+//     fn external_name() {
+//         let conn = match *CONN {
+//             ConnResult::Ok(ref conn) => conn,
+//             ConnResult::Err(ref _e) => return assert!(false),
+//         };
+//         match conn.set_external_name("foobar") {
+//             Ok(_) => {
+//                 match conn.external_name() {
+//                     Ok(ext_name) => assert!(ext_name == "foobar"),
+//                     Err(_e) => assert!(false),
+//                 }
+//             }
+//             Err(_e) => assert!(false),
+//         }
+//     }
 
-    #[test]
-    fn server_version() {
-        let conn = match *CONN {
-            ConnResult::Ok(ref conn) => conn,
-            ConnResult::Err(ref _e) => return assert!(false),
-        };
-        match conn.server_version() {
-            Ok(version_info) => {
-                assert!(version_info.version() == "12.1.0.2.0");
-                assert!(version_info.version_num() == 1201000200);
-                assert!(version_info.release() ==
-                        "Oracle Database 12c Standard Edition Release 12.1.0.2.0 - \
-                        64bit Production");
-            }
-            Err(_e) => assert!(false),
-        }
-    }
+//     #[test]
+//     fn server_version() {
+//         let conn = match *CONN {
+//             ConnResult::Ok(ref conn) => conn,
+//             ConnResult::Err(ref _e) => return assert!(false),
+//         };
+//         match conn.server_version() {
+//             Ok(version_info) => {
+//                 assert!(version_info.version() == "12.1.0.2.0");
+//                 assert!(version_info.version_num() == 1201000200);
+//                 assert!(version_info.release() ==
+//                         "Oracle Database 12c Standard Edition Release 12.1.0.2.0 - \
+//                         64bit Production");
+//             }
+//             Err(_e) => assert!(false),
+//         }
+//     }
 
-    #[test]
-    fn statement_cache_size() {
-        let conn = match *CONN {
-            ConnResult::Ok(ref conn) => conn,
-            ConnResult::Err(ref _e) => return assert!(false),
-        };
-        match conn.statement_cache_size() {
-            Ok(size) => assert!(size == 20),
-            Err(_e) => assert!(false),
-        }
-    }
+//     #[test]
+//     fn statement_cache_size() {
+//         let conn = match *CONN {
+//             ConnResult::Ok(ref conn) => conn,
+//             ConnResult::Err(ref _e) => return assert!(false),
+//         };
+//         match conn.statement_cache_size() {
+//             Ok(size) => assert!(size == 20),
+//             Err(_e) => assert!(false),
+//         }
+//     }
 
-    #[test]
-    fn ping() {
-        let conn = match *CONN {
-            ConnResult::Ok(ref conn) => conn,
-            ConnResult::Err(ref _e) => return assert!(false),
-        };
-        match conn.ping() {
-            Ok(_) => assert!(true),
-            Err(_e) => assert!(false),
-        }
-    }
+//     #[test]
+//     fn ping() {
+//         let conn = match *CONN {
+//             ConnResult::Ok(ref conn) => conn,
+//             ConnResult::Err(ref _e) => return assert!(false),
+//         };
+//         match conn.ping() {
+//             Ok(_) => assert!(true),
+//             Err(_e) => assert!(false),
+//         }
+//     }
 
-    #[test]
-    fn set_action() {
-        let conn = match *CONN {
-            ConnResult::Ok(ref conn) => conn,
-            ConnResult::Err(ref _e) => return assert!(false),
-        };
-        match conn.set_action("oci_test") {
-            Ok(_) => assert!(true),
-            Err(_e) => assert!(false),
-        }
-    }
+//     #[test]
+//     fn set_action() {
+//         let conn = match *CONN {
+//             ConnResult::Ok(ref conn) => conn,
+//             ConnResult::Err(ref _e) => return assert!(false),
+//         };
+//         match conn.set_action("oci_test") {
+//             Ok(_) => assert!(true),
+//             Err(_e) => assert!(false),
+//         }
+//     }
 
-    #[test]
-    fn set_client_id() {
-        let conn = match *CONN {
-            ConnResult::Ok(ref conn) => conn,
-            ConnResult::Err(ref _e) => return assert!(false),
-        };
-        match conn.set_client_identifier("oci_test") {
-            Ok(_) => assert!(true),
-            Err(_e) => assert!(false),
-        }
-    }
+//     #[test]
+//     fn set_client_id() {
+//         let conn = match *CONN {
+//             ConnResult::Ok(ref conn) => conn,
+//             ConnResult::Err(ref _e) => return assert!(false),
+//         };
+//         match conn.set_client_identifier("oci_test") {
+//             Ok(_) => assert!(true),
+//             Err(_e) => assert!(false),
+//         }
+//     }
 
-    #[test]
-    fn set_client_info() {
-        let conn = match *CONN {
-            ConnResult::Ok(ref conn) => conn,
-            ConnResult::Err(ref _e) => return assert!(false),
-        };
-        match conn.set_client_info("oci_test") {
-            Ok(_) => assert!(true),
-            Err(_e) => assert!(false),
-        }
-    }
+//     #[test]
+//     fn set_client_info() {
+//         let conn = match *CONN {
+//             ConnResult::Ok(ref conn) => conn,
+//             ConnResult::Err(ref _e) => return assert!(false),
+//         };
+//         match conn.set_client_info("oci_test") {
+//             Ok(_) => assert!(true),
+//             Err(_e) => assert!(false),
+//         }
+//     }
 
-    #[test]
-    fn set_db_op() {
-        let conn = match *CONN {
-            ConnResult::Ok(ref conn) => conn,
-            ConnResult::Err(ref _e) => return assert!(false),
-        };
-        match conn.set_db_op("oci_test") {
-            Ok(_) => assert!(true),
-            Err(_e) => assert!(false),
-        }
-    }
+//     #[test]
+//     fn set_db_op() {
+//         let conn = match *CONN {
+//             ConnResult::Ok(ref conn) => conn,
+//             ConnResult::Err(ref _e) => return assert!(false),
+//         };
+//         match conn.set_db_op("oci_test") {
+//             Ok(_) => assert!(true),
+//             Err(_e) => assert!(false),
+//         }
+//     }
 
-    #[test]
-    fn set_internal_name() {
-        let conn = match *CONN {
-            ConnResult::Ok(ref conn) => conn,
-            ConnResult::Err(ref _e) => return assert!(false),
-        };
-        match conn.set_internal_name("oci_test") {
-            Ok(_) => assert!(true),
-            Err(_e) => assert!(false),
-        }
-    }
+//     #[test]
+//     fn set_internal_name() {
+//         let conn = match *CONN {
+//             ConnResult::Ok(ref conn) => conn,
+//             ConnResult::Err(ref _e) => return assert!(false),
+//         };
+//         match conn.set_internal_name("oci_test") {
+//             Ok(_) => assert!(true),
+//             Err(_e) => assert!(false),
+//         }
+//     }
 
-    #[test]
-    fn set_module() {
-        let conn = match *CONN {
-            ConnResult::Ok(ref conn) => conn,
-            ConnResult::Err(ref _e) => return assert!(false),
-        };
-        match conn.set_module("oci_test") {
-            Ok(_) => assert!(true),
-            Err(_e) => assert!(false),
-        }
-    }
+//     #[test]
+//     fn set_module() {
+//         let conn = match *CONN {
+//             ConnResult::Ok(ref conn) => conn,
+//             ConnResult::Err(ref _e) => return assert!(false),
+//         };
+//         match conn.set_module("oci_test") {
+//             Ok(_) => assert!(true),
+//             Err(_e) => assert!(false),
+//         }
+//     }
 
-    #[test]
-    fn new_var() {
-        let conn = match *CONN {
-            ConnResult::Ok(ref conn) => conn,
-            ConnResult::Err(ref _e) => return assert!(false),
-        };
-        match conn.new_var(Varchar, Bytes, 5, 256, false, false) {
-            Ok(var) => {
-                if let Ok(sib) = var.get_size_in_bytes() {
-                    assert!(sib == 256);
-                } else {
-                    assert!(false);
-                }
+//     #[test]
+//     fn new_var() {
+//         let conn = match *CONN {
+//             ConnResult::Ok(ref conn) => conn,
+//             ConnResult::Err(ref _e) => return assert!(false),
+//         };
+//         match conn.new_var(Varchar, Bytes, 5, 256, false, false) {
+//             Ok(var) => {
+//                 if let Ok(sib) = var.get_size_in_bytes() {
+//                     assert!(sib == 256);
+//                 } else {
+//                     assert!(false);
+//                 }
 
-                if let Ok(ne) = var.get_num_elements() {
-                    assert!(ne == 0);
-                } else {
-                    assert!(false);
-                }
+//                 if let Ok(ne) = var.get_num_elements() {
+//                     assert!(ne == 0);
+//                 } else {
+//                     assert!(false);
+//                 }
 
-                if let Ok(ne) = var.get_data() {
-                    assert!(ne == 5);
-                } else {
-                    assert!(false);
-                }
-            }
-            Err(_e) => assert!(false),
-        }
-    }
-}
+//                 if let Ok(ne) = var.get_data() {
+//                     assert!(ne == 5);
+//                 } else {
+//                     assert!(false);
+//                 }
+//             }
+//             Err(_e) => assert!(false),
+//         }
+//     }
+// }

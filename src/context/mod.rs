@@ -4,34 +4,30 @@
 //! validate the version used by the application. Context handles are destroyed by using the
 //! function `dpiContext_destroy()`.
 use error::{ErrorKind, Result};
-use odpi::constants::{DPI_MAJOR_VERSION, DPI_MINOR_VERSION};
+use odpi::constants::{DPI_FAILURE, DPI_MAJOR_VERSION, DPI_MINOR_VERSION};
 use odpi::externs;
 use odpi::opaque::ODPIContext;
-use odpi::structs::{ODPICommonCreateParams, ODPIErrorInfo, ODPIVersionInfo};
+use odpi::structs::{ODPICommonCreateParams, ODPIConnCreateParams, ODPIErrorInfo, ODPIVersionInfo};
 use public::VersionInfo;
+use slog::Logger;
 use std::{mem, ptr};
 
 pub mod errorinfo;
 pub mod params;
 
 use self::errorinfo::ErrorInfo;
-use self::params::Create;
+use self::params::{Conn, Create};
+use std::env;
+use util::ODPIStr;
 
 /// This structure represents the context in which all activity in the library takes place.
 pub struct Context {
     /// This structure represents the context in which all activity in the library takes place.
     context: *mut ODPIContext,
-    /// The common `Create` parameters.
-    create_params: Create,
-}
-
-/// Initializes the `Create` structure to default values.
-fn init_common_create_params(ctxt: *mut ODPIContext) -> Result<Create> {
-    let mut ccp = unsafe { mem::uninitialized::<ODPICommonCreateParams>() };
-
-    try_dpi!(externs::dpiContext_initCommonCreateParams(ctxt, &mut ccp),
-             Ok(Create::new(&mut ccp)),
-             ErrorKind::Context("dpiContext_initCommonCreateParams".to_string()))
+    /// Optional stdout logger.
+    stdout: Option<Logger>,
+    /// Optoinal stderr logger.
+    stderr: Option<Logger>,
 }
 
 impl Context {
@@ -44,22 +40,12 @@ impl Context {
                                             DPI_MINOR_VERSION,
                                             &mut ctxt,
                                             &mut err),
-                 {
-                     let ccp = init_common_create_params(ctxt)?;
-                     let context = Context {
-                         context: ctxt,
-                         create_params: ccp,
-                     };
-                     Ok(context)
-                 },
+                 Ok(Context {
+                        context: ctxt,
+                        stdout: None,
+                        stderr: None,
+                    }),
                  ErrorKind::Context("dpiContext_create".to_string()))
-    }
-
-    /// Destroys the context that was earlier created with the function `create`.
-    pub fn destroy(&self) -> Result<()> {
-        try_dpi!(externs::dpiContext_destroy(self.context),
-                 Ok(()),
-                 ErrorKind::Context("dpiContext_destroy".to_string()))
     }
 
     /// Return information about the version of the Oracle Client that is being used.
@@ -82,14 +68,40 @@ impl Context {
         }
     }
 
-    ///
-    pub fn create_params(&self) -> &Create {
-        &self.create_params
+    /// Initializes the `Create` structure to default values.
+    pub fn init_common_create_params(&self) -> Result<Create> {
+        let mut ccp = unsafe { mem::uninitialized::<ODPICommonCreateParams>() };
+
+        try_dpi!(externs::dpiContext_initCommonCreateParams(self.context, &mut ccp),
+                 {
+                     let driver_name = format!("Rust Oracle: {}", env::var("CARGO_PKG_VERSION")?);
+                     let driver_name_s = ODPIStr::from(driver_name);
+                     ccp.driver_name = driver_name_s.ptr();
+                     ccp.driver_name_length = driver_name_s.len();
+                     Ok(Create::new(ccp))
+                 },
+                 ErrorKind::Context("dpiContext_initCommonCreateParams".to_string()))
     }
 
-    /// Get the common `Create` params.
-    pub fn create_params_mut(&mut self) -> &mut Create {
-        &mut self.create_params
+    /// Initializes the `Conn` structure to default values.
+    pub fn init_conn_create_params(&self) -> Result<Conn> {
+        let mut conn = unsafe { mem::uninitialized::<ODPIConnCreateParams>() };
+
+        try_dpi!(externs::dpiContext_initConnCreateParams(self.context, &mut conn),
+                 {
+                     Ok(Conn::new(conn))
+                 },
+                 ErrorKind::Context("dpiContext_initConnCreateParams".to_string()))
+    }
+}
+
+impl Drop for Context {
+    fn drop(&mut self) {
+        if unsafe { externs::dpiContext_destroy(self.context) } == DPI_FAILURE {
+            try_error!(self.stderr, "Failed to destroy context");
+        } else {
+            try_info!(self.stdout, "Successfully destroyed context");
+        }
     }
 }
 
@@ -97,14 +109,67 @@ impl Context {
 mod test {
     use super::Context;
     use odpi::flags;
+    use std::ffi::CString;
 
     #[test]
     fn create() {
         match Context::create() {
+            Ok(ref mut _ctxt) => assert!(true),
+            Err(_e) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn init_common_create_params() {
+        match Context::create() {
             Ok(ref mut ctxt) => {
-                let new_flags = ctxt.create_params().get_mode() | flags::DPI_MODE_CREATE_THREADED;
-                ctxt.create_params_mut().set_mode(new_flags);
-                assert!(true);
+                match ctxt.init_common_create_params() {
+                    Ok(ref mut ccp) => {
+                        let default_flags = ccp.get_create_mode();
+                        let new_flags = default_flags | flags::DPI_MODE_CREATE_THREADED;
+                        let enc_cstr = CString::new("UTF-8").expect("badness");
+
+                        ccp.set_create_mode(new_flags);
+                        ccp.set_edition("1.0");
+                        ccp.set_encoding(enc_cstr.as_ptr());
+                        ccp.set_nchar_encoding(enc_cstr.as_ptr());
+
+                        assert!(ccp.get_create_mode() ==
+                                flags::DPI_MODE_CREATE_THREADED | flags::DPI_MODE_CREATE_DEFAULT);
+                        assert!(ccp.get_encoding() == "UTF-8");
+                        assert!(ccp.get_nchar_encoding() == "UTF-8");
+                        assert!(ccp.get_edition() == "1.0");
+                        assert!(ccp.get_driver_name() == "Rust Oracle: 0.1.0");
+                    }
+                    Err(_r) => assert!(false),
+                }
+            }
+            Err(_e) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn init_conn_create_params() {
+        match Context::create() {
+            Ok(ref mut ctxt) => {
+                match ctxt.init_conn_create_params() {
+                    Ok(ref mut conn) => {
+                        let auth_default_flags = conn.get_auth_mode();
+                        let auth_new_flags = authdefault_flags | flags::DPI_MODE_AUTH_SYSDBA;
+                        let purity_default_flags = conn.get_purity();
+                        
+                        assert!(purity_default_flags == DPI_PURITY_DEFAULT);
+
+                        conn.set_auth_mode(auth_new_flags);
+                        conn.set_connection_class("conn_class");
+                        
+
+                        assert!(conn.get_auth_mode() ==
+                                flags::DPI_MODE_AUTH_SYSDBA | flags::DPI_MODE_AUTH_DEFAULT);
+                        assert!(conn.get_connection_class() == "conn_class");
+                    }
+                    Err(_r) => assert!(false),
+                }
             }
             Err(_e) => assert!(false),
         }
