@@ -18,15 +18,24 @@ use self::errorinfo::ErrorInfo;
 use self::params::Create;
 
 /// This structure represents the context in which all activity in the library takes place.
-#[allow(dead_code)]
 pub struct Context {
     /// This structure represents the context in which all activity in the library takes place.
     context: *mut ODPIContext,
+    /// The common `Create` parameters.
+    create_params: Create,
+}
+
+/// Initializes the `Create` structure to default values.
+fn init_common_create_params(ctxt: *mut ODPIContext) -> Result<Create> {
+    let mut ccp = unsafe { mem::uninitialized::<ODPICommonCreateParams>() };
+
+    try_dpi!(externs::dpiContext_initCommonCreateParams(ctxt, &mut ccp),
+             Ok(Create::new(&mut ccp)),
+             ErrorKind::Context("dpiContext_initCommonCreateParams".to_string()))
 }
 
 impl Context {
     /// Create a new `Context` struct.
-    #[allow(dead_code)]
     pub fn create() -> Result<Context> {
         let mut ctxt = ptr::null_mut();
         let mut err = unsafe { mem::uninitialized::<ODPIErrorInfo>() };
@@ -35,7 +44,14 @@ impl Context {
                                             DPI_MINOR_VERSION,
                                             &mut ctxt,
                                             &mut err),
-                 Ok(Context { context: ctxt }),
+                 {
+                     let ccp = init_common_create_params(ctxt)?;
+                     let context = Context {
+                         context: ctxt,
+                         create_params: ccp,
+                     };
+                     Ok(context)
+                 },
                  ErrorKind::Context("dpiContext_create".to_string()))
     }
 
@@ -66,24 +82,30 @@ impl Context {
         }
     }
 
-    /// Initializes the `Create` structure to default values.
-    pub fn init_common_create_params(&self) -> Result<Create> {
-        let mut ccp = unsafe { mem::uninitialized::<ODPICommonCreateParams>() };
+    ///
+    pub fn create_params(&self) -> &Create {
+        &self.create_params
+    }
 
-        try_dpi!(externs::dpiContext_initCommonCreateParams(self.context, &mut ccp),
-                 Ok(Create::new(&mut ccp)),
-                 ErrorKind::Context("dpiContext_initCommonCreateParams".to_string()))
+    /// Get the common `Create` params.
+    pub fn create_params_mut(&mut self) -> &mut Create {
+        &mut self.create_params
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::Context;
+    use odpi::flags;
 
     #[test]
     fn create() {
         match Context::create() {
-            Ok(ref mut _ctxt) => assert!(true),
+            Ok(ref mut ctxt) => {
+                let new_flags = ctxt.create_params().get_mode() | flags::DPI_MODE_CREATE_THREADED;
+                ctxt.create_params_mut().set_mode(new_flags);
+                assert!(true);
+            }
             Err(_e) => assert!(false),
         }
     }
