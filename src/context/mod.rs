@@ -1,25 +1,23 @@
 //! Context handles are the top level handles created by the library and are used for all error
 //! handling as well as creating pools and standalone connections to the database. The first call to
-//! ODPI-C by any application must be `dpiContext_create()` which will create the context as well as
-//! validate the version used by the application. Context handles are destroyed by using the
-//! function `dpiContext_destroy()`.
+//! ODPI-C by any application must be `create()` which will create the context as well asvalidate
+//! the version used by the application.
 use error::{ErrorKind, Result};
 use odpi::constants::{DPI_FAILURE, DPI_MAJOR_VERSION, DPI_MINOR_VERSION};
 use odpi::externs;
 use odpi::opaque::ODPIContext;
 use odpi::structs::{ODPICommonCreateParams, ODPIConnCreateParams, ODPIErrorInfo,
-                    ODPIPoolCreateParams, ODPIVersionInfo};
-use public::VersionInfo;
+                    ODPIPoolCreateParams, ODPISubscrCreateParams, ODPIVersionInfo};
+use common::versioninfo::VersionInfo;
 use slog::Logger;
-use std::{mem, ptr};
+use std::{env, mem, ptr};
+use util::ODPIStr;
 
 pub mod errorinfo;
 pub mod params;
 
 use self::errorinfo::ErrorInfo;
-use self::params::{CommonCreate, ConnCreate, PoolCreate};
-use std::env;
-use util::ODPIStr;
+use self::params::{CommonCreate, ConnCreate, PoolCreate, SubscrCreate};
 
 /// This structure represents the context in which all activity in the library takes place.
 pub struct Context {
@@ -49,6 +47,11 @@ impl Context {
                  ErrorKind::Context("dpiContext_create".to_string()))
     }
 
+    /// Get the pointer to the inner ODPI struct.
+    #[doc(hidden)]
+    pub fn inner(&self) -> *mut ODPIContext {
+        self.context
+    }
     /// Return information about the version of the Oracle Client that is being used.
     pub fn get_client_version(&self) -> Result<VersionInfo> {
         let mut version_info = unsafe { mem::uninitialized::<ODPIVersionInfo>() };
@@ -84,7 +87,7 @@ impl Context {
                  ErrorKind::Context("dpiContext_initCommonCreateParams".to_string()))
     }
 
-    /// Initializes the `Conn` structure to default values.
+    /// Initializes the `ConnCreate` structure to default values.
     pub fn init_conn_create_params(&self) -> Result<ConnCreate> {
         let mut conn = unsafe { mem::uninitialized::<ODPIConnCreateParams>() };
 
@@ -95,12 +98,20 @@ impl Context {
                  ErrorKind::Context("dpiContext_initConnCreateParams".to_string()))
     }
 
-    /// Initializes the `Pool` structure to default values.
+    /// Initializes the `PoolCreate` structure to default values.
     pub fn init_pool_create_params(&self) -> Result<PoolCreate> {
         let mut pool = unsafe { mem::uninitialized::<ODPIPoolCreateParams>() };
         try_dpi!(externs::dpiContext_initPoolCreateParams(self.context, &mut pool),
                  Ok(PoolCreate::new(pool)),
                  ErrorKind::Context("dpiContext_initPoolCreateParams".to_string()))
+    }
+
+    /// Initializes the `SubscrCreate` struct to default values.
+    pub fn init_subscr_create_params(&self) -> Result<SubscrCreate> {
+        let mut subscr = unsafe { mem::uninitialized::<ODPISubscrCreateParams>() };
+        try_dpi!(externs::dpiContext_initSubscrCreateParams(self.context, &mut subscr),
+                 Ok(SubscrCreate::new(subscr)),
+                 ErrorKind::Context("dpiContext_initSubscrCreateParams".to_string()))
     }
 }
 
@@ -118,7 +129,9 @@ impl Drop for Context {
 mod test {
     use super::Context;
     use super::params::AppContext;
-    use odpi::flags;
+    use odpi::{flags, structs};
+    use odpi::flags::ODPISubscrNamespace::*;
+    use odpi::flags::ODPISubscrProtocol::*;
     use std::ffi::CString;
 
     #[test]
@@ -255,6 +268,56 @@ mod test {
                         assert!(!pcp.get_homogeneous());
                         assert!(pcp.get_external_auth());
                         assert!(pcp.get_get_mode() == flags::DPI_MODE_POOL_GET_FORCEGET);
+                    }
+                    Err(_e) => assert!(false),
+                }
+            }
+            Err(_e) => assert!(false),
+        }
+    }
+
+    extern "C" fn subscr_callback(_context: *mut ::std::os::raw::c_void,
+                                  _message: *mut structs::ODPISubscrMessage) {
+        // For testing
+    }
+
+    #[test]
+    fn init_subscr_create_params() {
+        match Context::create() {
+            Ok(ref mut ctxt) => {
+                match ctxt.init_subscr_create_params() {
+                    Ok(ref mut scp) => {
+                        assert!(scp.get_subscr_namespace() == DbChange);
+                        assert!(scp.get_protocol() == Callback);
+                        assert!(scp.get_qos() == flags::DPI_SUBSCR_QOS_NONE);
+                        assert!(scp.get_operations() == flags::DPI_OPCODE_ALL_OPS);
+                        assert!(scp.get_port_number() == 0);
+                        assert!(scp.get_timeout() == 0);
+                        assert!(scp.get_name() == "");
+                        assert!(scp.get_callback() == None);
+                        // TODO: test callback_context
+                        assert!(scp.get_recipient_name() == "");
+
+                        scp.set_protocol(HTTP);
+                        scp.set_qos(flags::DPI_SUBSCR_QOS_BEST_EFFORT |
+                                    flags::DPI_SUBSCR_QOS_ROWIDS);
+                        scp.set_operations(flags::DPI_OPCODE_ALTER | flags::DPI_OPCODE_DROP);
+                        scp.set_port_number(32276);
+                        scp.set_timeout(10000);
+                        scp.set_name("subscription");
+                        scp.set_callback(Some(subscr_callback));
+                        scp.set_recipient_name("yoda");
+
+                        assert!(scp.get_protocol() == HTTP);
+                        assert!(scp.get_qos() ==
+                                flags::DPI_SUBSCR_QOS_BEST_EFFORT | flags::DPI_SUBSCR_QOS_ROWIDS);
+                        assert!(scp.get_operations() ==
+                                flags::DPI_OPCODE_ALTER | flags::DPI_OPCODE_DROP);
+                        assert!(scp.get_port_number() == 32276);
+                        assert!(scp.get_timeout() == 10000);
+                        assert!(scp.get_name() == "subscription");
+                        assert!(scp.get_recipient_name() == "yoda");
+                        assert!(scp.get_callback() == Some(subscr_callback));
                     }
                     Err(_e) => assert!(false),
                 }

@@ -1,7 +1,8 @@
-//!
-use odpi::flags;
+//! These structs are used for initializing parameters used during connection creation, pool
+//! creation, or subscription creation.
+use odpi::{externs, flags};
 use odpi::structs::{ODPIAppContext, ODPICommonCreateParams, ODPIConnCreateParams,
-                    ODPIPoolCreateParams};
+                    ODPIPoolCreateParams, ODPISubscrCreateParams};
 use pool::Pool;
 use std::ffi::CStr;
 use util::ODPIStr;
@@ -78,8 +79,15 @@ pub struct CommonCreate {
 
 impl CommonCreate {
     /// Create a new `Create` struct.
+    #[doc(hidden)]
     pub fn new(ccp: ODPICommonCreateParams) -> CommonCreate {
         CommonCreate { ccp: ccp }
+    }
+
+    /// Get the inner FFI struct.
+    #[doc(hidden)]
+    pub fn inner(&self) -> ODPICommonCreateParams {
+        self.ccp
     }
 
     /// Get the `create_mode` value.
@@ -180,8 +188,15 @@ pub struct ConnCreate {
 
 impl ConnCreate {
     /// Create a new `ConnCreate` struct.
+    #[doc(hidden)]
     pub fn new(conn: ODPIConnCreateParams) -> ConnCreate {
         ConnCreate { conn: conn }
+    }
+
+    /// Get the inner FFI struct.
+    #[doc(hidden)]
+    pub fn inner(&self) -> ODPIConnCreateParams {
+        self.conn
     }
 
     /// Get the `auth_mode` value.
@@ -409,8 +424,15 @@ pub struct PoolCreate {
 
 impl PoolCreate {
     /// Create a new `PoolCreate` struct.
+    #[doc(hidden)]
     pub fn new(pool: ODPIPoolCreateParams) -> PoolCreate {
         PoolCreate { pool: pool }
+    }
+
+    /// Get the inner FFI struct.
+    #[doc(hidden)]
+    pub fn inner(&self) -> ODPIPoolCreateParams {
+        self.pool
     }
 
     /// Get the `min_sessions` value.
@@ -547,5 +569,203 @@ impl PoolCreate {
             let res = ODPIStr::new(self.pool.out_pool_name, self.pool.out_pool_name_length);
             res.into()
         }
+    }
+}
+
+/// This structure is used for creating subscriptions to messages sent for object change
+/// notification, query change notification or advanced queuing. All members are initialized to
+/// default values using the `init_subscr_create_arams()` function.
+pub struct SubscrCreate {
+    /// The ODPI-C dpiSubscrCreateParams struct.
+    subscr: ODPISubscrCreateParams,
+}
+
+impl SubscrCreate {
+    #[doc(hidden)]
+    /// Create a new `SubscrCreate` struct.
+    pub fn new(subscr: ODPISubscrCreateParams) -> SubscrCreate {
+        SubscrCreate { subscr: subscr }
+    }
+
+    /// Get the inner FFI struct.
+    #[doc(hidden)]
+    pub fn inner(&self) -> ODPISubscrCreateParams {
+        self.subscr
+    }
+
+    /// Get the `subscr_namespace` value.
+    ///
+    /// Specifies the namespace in which the subscription is created. It is expected to be one of
+    /// the values from the enumeration `ODPISubscrNamespace`. The default value is
+    /// DPI_SUBSCR_NAMESPACE_DBCHANGE.
+    pub fn get_subscr_namespace(&self) -> flags::ODPISubscrNamespace {
+        self.subscr.subscr_namespace
+    }
+
+    /// Set the `subscr_namespace` value.
+    pub fn set_subscr_namespace(&mut self,
+                                subscr_namespace: flags::ODPISubscrNamespace)
+                                -> &mut SubscrCreate {
+        self.subscr.subscr_namespace = subscr_namespace;
+        self
+    }
+
+    /// Get the `protocol` value.
+    ///
+    /// Specifies the protocol used for sending notifications for the subscription. It is expected
+    /// to be one of the values from the enumeration `ODPISubscrProtocol`. The default value is
+    /// DPI_SUBSCR_PROTO_CALLBACK.
+    pub fn get_protocol(&self) -> flags::ODPISubscrProtocol {
+        self.subscr.protocol
+    }
+
+    /// Set the `protocol` value.
+    pub fn set_protocol(&mut self, protocol: flags::ODPISubscrProtocol) -> &mut SubscrCreate {
+        self.subscr.protocol = protocol;
+        self
+    }
+
+    /// Get the `qos` value.
+    ///
+    /// Specifies the quality of service flags to use with the subscription. It is expected to be
+    /// one or more of the values from the enumeration `ODPISubscrQOS`, OR'ed together. The default
+    /// value is to have no flags set.
+    pub fn get_qos(&self) -> flags::ODPISubscrQOS {
+        self.subscr.qos
+    }
+
+    /// Set the `qos` value.
+    pub fn set_qos(&mut self, qos: flags::ODPISubscrQOS) -> &mut SubscrCreate {
+        self.subscr.qos = qos;
+        self
+    }
+
+    /// Get the `operations` value.
+    ///
+    /// Specifies which operations on the registered tables or queries should result in
+    /// notifications. It is expected to be one or more of the values from the enumeration
+    /// `ODPIOpCode`, OR'ed together. The default value is DPI_OPCODE_ALL_OPS.
+    pub fn get_operations(&self) -> flags::ODPIOpCode {
+        self.subscr.operations
+    }
+
+    /// Set the `operations` value.
+    pub fn set_operations(&mut self, operations: flags::ODPIOpCode) -> &mut SubscrCreate {
+        self.subscr.operations = operations;
+        self
+    }
+
+    /// Get the `port_number` value.
+    ///
+    /// Specifies the port number on which to receive notifications. The default value is 0, which
+    /// means that a port number will be selected by the Oracle client.
+    pub fn get_port_number(&self) -> u32 {
+        self.subscr.port_number
+    }
+
+    /// Set the `port_number` value.
+    pub fn set_port_number(&mut self, port_number: u32) -> &mut SubscrCreate {
+        self.subscr.port_number = port_number;
+        self
+    }
+
+    /// Get the `timeout` value.
+    ///
+    /// Specifies the length of time, in seconds, before the subscription is unregistered. If the
+    /// value is 0, the subscription remains active until explicitly unregistered. The default value
+    /// is 0.
+    pub fn get_timeout(&self) -> u32 {
+        self.subscr.timeout
+    }
+
+    /// Set the `timeout` value.
+    pub fn set_timeout(&mut self, timeout: u32) -> &mut SubscrCreate {
+        self.subscr.timeout = timeout;
+        self
+    }
+
+    /// Get the `name` value.
+    ///
+    /// Specifies the name of the subscription, as a byte string in the encoding used for CHAR data.
+    /// This name must be consistent with the namespace identified in the `subscr_namespace` member.
+    /// The default value is NULL.
+    pub fn get_name(&self) -> String {
+        if self.subscr.name.is_null() {
+            "".to_string()
+        } else {
+            let res = ODPIStr::new(self.subscr.name, self.subscr.name_length);
+            res.into()
+        }
+    }
+
+    /// Set the `name` value.
+    pub fn set_name(&mut self, name: &str) -> &mut SubscrCreate {
+        let name_s = ODPIStr::from(name);
+        self.subscr.name = name_s.ptr();
+        self.subscr.name_length = name_s.len();
+        self
+    }
+
+    /// Get the `callback` value.
+    ///
+    /// Specifies the callback that will be called when a notification is sent to the subscription,
+    /// if the `protocol` member is set to DPI_SUBSCR_PROTO_CALLBACK. The callback accepts the
+    /// following arguments:
+    ///
+    /// * context -- the value of the `callbackContext` member.
+    /// * message -- a pointer to the message that is being sent. The message is in the form
+    /// `ODPISubscrMessage`.
+    ///
+    /// The default value is NULL. If a callback is specified and a notification is sent, this will
+    /// be performed on a separate thread. If database operations are going to take place, ensure
+    /// that the create mode DPI_MODE_CREATE_THREADED is set in the structure `CreateParams` when
+    /// creating the session pool or standalone connection that will be used in this callback.
+    pub fn get_callback(&self) -> externs::ODPISubscrCallback {
+        self.subscr.callback
+    }
+
+    /// Set the `callback` value.
+    pub fn set_callback(&mut self, callback: externs::ODPISubscrCallback) -> &mut SubscrCreate {
+        self.subscr.callback = callback;
+        self
+    }
+
+    /// Get the `callback_context` value.
+    ///
+    /// Specifies the value that will be used as the first argument to the callback specified in the
+    /// `callback` member. The default value is NULL.
+    pub fn get_callback_context(&self) -> *mut ::std::os::raw::c_void {
+        self.subscr.callback_context
+    }
+
+    /// Set the `callback_context` value.
+    pub fn set_callback_context(&mut self,
+                                callback_context: *mut ::std::os::raw::c_void)
+                                -> &mut SubscrCreate {
+        self.subscr.callback_context = callback_context;
+        self
+    }
+
+    /// Get the `recipient_name` value.
+    ///
+    /// Specifies the name of the recipient to which notifications are sent when the `protocol`
+    /// member is not set to DPI_SUBSCR_PROTO_CALLBACK. The value is expected to be a byte string in
+    /// the encoding used for CHAR data. The default value is NULL.
+    pub fn get_recipient_name(&self) -> String {
+        if self.subscr.recipient_name.is_null() {
+            "".to_string()
+        } else {
+            let res = ODPIStr::new(self.subscr.recipient_name,
+                                   self.subscr.recipient_name_length);
+            res.into()
+        }
+    }
+
+    /// Set the `recipient_name` value.
+    pub fn set_recipient_name(&mut self, recipient_name: &str) -> &mut SubscrCreate {
+        let recipient_name_s = ODPIStr::from(recipient_name);
+        self.subscr.recipient_name = recipient_name_s.ptr();
+        self.subscr.recipient_name_length = recipient_name_s.len();
+        self
     }
 }

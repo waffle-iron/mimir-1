@@ -1,7 +1,7 @@
 //! ODPI-C externs
 use odpi::{flags, opaque, structs};
 
-/// The optional function pointer use in the `ODPISubscrCreateParams` struct.
+/// The optional function pointer used in the `ODPISubscrCreateParams` struct.
 pub type ODPISubscrCallback =
     Option<unsafe extern "C" fn(context: *mut ::std::os::raw::c_void,
                                 message: *mut structs::ODPISubscrMessage)>;
@@ -32,6 +32,7 @@ extern "C" {
                                              -> ::std::os::raw::c_int;
 }
 
+#[allow(dead_code)]
 extern "C" {
     pub fn dpiConn_addRef(conn: *mut opaque::ODPIConn) -> ::std::os::raw::c_int;
     pub fn dpiConn_beginDistribTrans(conn: *mut opaque::ODPIConn,
@@ -210,6 +211,7 @@ extern "C" {
                                    -> ::std::os::raw::c_int;
 }
 
+#[allow(dead_code)]
 extern "C" {
     pub fn dpiStmt_addRef(stmt: *mut opaque::ODPIStmt) -> ::std::os::raw::c_int;
     pub fn dpiStmt_bindByName(stmt: *mut opaque::ODPIStmt,
@@ -257,6 +259,7 @@ extern "C" {
                                  -> ::std::os::raw::c_int;
 }
 
+#[allow(dead_code)]
 extern "C" {
     pub fn dpiVar_addRef(var: *mut opaque::ODPIVar) -> ::std::os::raw::c_int;
     pub fn dpiVar_copyData(var: *mut opaque::ODPIVar,
@@ -277,6 +280,7 @@ extern "C" {
     pub fn dpiVar_release(var: *mut opaque::ODPIVar) -> ::std::os::raw::c_int;
 }
 
+#[allow(dead_code)]
 extern "C" {
     pub fn dpiData_getBytes(data: *mut structs::ODPIData) -> *mut structs::ODPIBytes;
     pub fn dpiData_getDouble(data: *mut structs::ODPIData) -> f64;

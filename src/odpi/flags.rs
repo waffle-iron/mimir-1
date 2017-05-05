@@ -19,6 +19,7 @@ bitflags! {
 
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[allow(dead_code)]
 /// This enumeration identifies the mode to use when closing connections to the database.
 pub enum ODPIConnCloseMode {
     /// Default value used when closing connections.
@@ -98,6 +99,7 @@ bitflags! {
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 /// This enumeration identifies the type of data that is being transferred to and from the database.
+#[allow(dead_code)]
 pub enum ODPINativeTypeNum {
     /// Data is passed as a 64-bit integer in the asInt64 member of dpiData.value.
     Int64 = 3000,
@@ -162,6 +164,7 @@ bitflags! {
 /// This enumeration identifies the types of Oracle data that can be used for binding data as
 /// arguments to a statement, fetching data from the database, or getting and setting object
 /// attributes and element values.
+#[allow(dead_code)]
 pub enum ODPIOracleTypeNum {
     /// None type.
     TypeNone = 2000,
@@ -286,6 +289,7 @@ bitflags! {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 /// This enumeration identifies the mode to use when shutting down a database using
 /// `dpiConn_shutdownDatabase()`.
+#[allow(dead_code)]
 pub enum ODPIShutdownMode {
     /// Further connections to the database are prohibited. Wait for users to disconnect from the
     /// database.
@@ -310,6 +314,7 @@ pub enum ODPIShutdownMode {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 /// This enumeration identifies the mode to use when starting up a database using
 /// `dpiConn_startupDatabase()`.
+#[allow(dead_code)]
 pub enum ODPIStartupMode {
     /// Default mode for startup which permits database access to all users.
     Def = 0,
@@ -321,19 +326,17 @@ pub enum ODPIStartupMode {
     Restrict = 2,
 }
 
-bitflags! {
-    #[repr(C)]
-    /// This enumeration identifies the namespaces supported by subscriptions.
-    pub flags ODPISubscrNamespace: u32 {
-        /// Identifies the namespace used for receiving notifications for database object changes
-        /// and query changes.
-        const DPI_SUBSCR_NAMESPACE_DBCHANGE = 0b00000000,
-    }
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+/// This enumeration identifies the namespaces supported by subscriptions.
+pub enum ODPISubscrNamespace {
+    /// Identifies the namespace used for receiving notifications for database object changes
+    /// and query changes.
+    DbChange = 0,
 }
 
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-#[allow(dead_code)]
 /// This enumeration identifies the protocol used for sending notifications to subscriptions.
 pub enum ODPISubscrProtocol {
     /// Notifications are sent by calling the callback specified when the subscription was
@@ -354,6 +357,8 @@ bitflags! {
     /// This enumeration identifies the quality of service flags for sending notifications to
     /// subscriptions.
     pub flags ODPISubscrQOS: u32 {
+        /// No QOS
+        const DPI_SUBSCR_QOS_NONE        = 0b00000000,
         /// Notifications are sent reliably. If the database fails, the notifications are not lost.
         /// This is not supported for nonpersistent queues or buffered messaging.
         const DPI_SUBSCR_QOS_RELIABLE    = 0b00000001,

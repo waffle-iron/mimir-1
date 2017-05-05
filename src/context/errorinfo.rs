@@ -1,4 +1,4 @@
-//!
+//! This structure is used for transferring error information from ODPI-C.
 use odpi::structs::ODPIErrorInfo;
 use std::ffi::CStr;
 use std::{fmt, slice};
