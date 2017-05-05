@@ -108,6 +108,7 @@ impl Drop for Context {
 #[cfg(test)]
 mod test {
     use super::Context;
+    use super::params::AppContext;
     use odpi::flags;
     use std::ffi::CString;
 
@@ -155,18 +156,29 @@ mod test {
                 match ctxt.init_conn_create_params() {
                     Ok(ref mut conn) => {
                         let auth_default_flags = conn.get_auth_mode();
-                        let auth_new_flags = authdefault_flags | flags::DPI_MODE_AUTH_SYSDBA;
+                        let auth_new_flags = auth_default_flags | flags::DPI_MODE_AUTH_SYSDBA;
                         let purity_default_flags = conn.get_purity();
-                        
-                        assert!(purity_default_flags == DPI_PURITY_DEFAULT);
+                        let app_ctxt = AppContext::new("ns", "name", "value");
+                        let mut app_ctxt_vec = Vec::new();
+                        app_ctxt_vec.push(app_ctxt);
+
+                        assert!(purity_default_flags == flags::DPI_PURITY_DEFAULT);
 
                         conn.set_auth_mode(auth_new_flags);
                         conn.set_connection_class("conn_class");
-                        
+                        conn.set_purity(flags::DPI_PURITY_NEW);
+                        conn.set_new_password("password");
+                        conn.set_app_context(app_ctxt_vec);
+
+                        let new_app_ctxt_vec = conn.get_app_context();
 
                         assert!(conn.get_auth_mode() ==
                                 flags::DPI_MODE_AUTH_SYSDBA | flags::DPI_MODE_AUTH_DEFAULT);
                         assert!(conn.get_connection_class() == "conn_class");
+                        assert!(conn.get_purity() == flags::DPI_PURITY_NEW);
+                        assert!(conn.get_new_password() == "password");
+                        assert!(conn.get_num_app_context() == 1);
+                        assert!(new_app_ctxt_vec.len() == 1);
                     }
                     Err(_r) => assert!(false),
                 }

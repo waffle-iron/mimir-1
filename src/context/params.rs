@@ -1,8 +1,38 @@
 //!
 use odpi::flags;
-use odpi::structs::{ODPICommonCreateParams, ODPIConnCreateParams};
+use odpi::structs::{ODPIAppContext, ODPICommonCreateParams, ODPIConnCreateParams};
 use std::ffi::CStr;
 use util::ODPIStr;
+
+///
+pub struct AppContext {
+    ctxt: ODPIAppContext
+}
+
+impl AppContext {
+    ///
+    pub fn new(namespace: &str, name: &str, value: &str) -> AppContext {
+        let namespace_s = ODPIStr::from(namespace);
+        let name_s = ODPIStr::from(name);
+        let value_s = ODPIStr::from(value);
+
+        let ctxt = ODPIAppContext {
+            namespace_name: namespace_s.ptr(),
+            namespace_name_length: namespace_s.len(),
+            name: name_s.ptr(),
+            name_length: name_s.len(),
+            value: value_s.ptr(),
+            value_length: value_s.len(),
+        };
+
+        AppContext { ctxt: ctxt }
+    }
+
+    ///
+    pub fn from_odpi(ctxt: ODPIAppContext) -> AppContext {
+        AppContext { ctxt: ctxt }
+    }
+}
 
 ///
 pub struct Create {
@@ -127,5 +157,50 @@ impl Conn {
     pub fn set_purity(&mut self, purity: flags::ODPIPurity) -> &mut Conn {
         self.conn.purity = purity;
         self
+    }
+
+    ///
+    pub fn get_new_password(&self) -> String {
+        let new_password_s = ODPIStr::new(self.conn.new_password,
+                                              self.conn.new_password_length);
+        new_password_s.into()
+    }
+
+    ///
+    pub fn set_new_password(&mut self, new_password: &str) -> &mut Conn {
+        let new_password_s = ODPIStr::from(new_password);
+        self.conn.new_password = new_password_s.ptr();
+        self.conn.new_password_length = new_password_s.len();
+        self
+    }
+
+    ///
+    pub fn get_app_context(&self) -> Vec<AppContext> {
+        let len = self.conn.num_app_context as isize;
+        let head_ptr = self.conn.app_context;
+
+        let mut app_contexts = Vec::new();
+        for i in 0..len {
+            app_contexts.push(AppContext::from_odpi(unsafe { *head_ptr.offset(i) } ));
+        }
+        app_contexts
+    }
+
+    ///
+    pub fn set_app_context(&mut self, app_contexts: Vec<AppContext>) -> &mut Conn {
+        let len = app_contexts.len() as u32;
+        let mut oac_vec: Vec<ODPIAppContext> = Vec::new();
+        for ac in &app_contexts {
+            oac_vec.push(ac.ctxt);
+        }
+        let ac_ptr = app_contexts.as_ptr();
+        self.conn.app_context = ac_ptr as *mut ODPIAppContext;
+        self.conn.num_app_context = len;
+        self
+    }
+
+    ///
+    pub fn get_num_app_context(&self) -> u32 {
+        self.conn.num_app_context
     }
 }
