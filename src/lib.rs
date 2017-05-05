@@ -24,6 +24,7 @@ mod error;
 mod msgprops;
 mod object;
 mod odpi;
+pub mod pool;
 mod util;
 
 pub use error::from_dpi_context;

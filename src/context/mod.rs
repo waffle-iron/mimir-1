@@ -7,7 +7,8 @@ use error::{ErrorKind, Result};
 use odpi::constants::{DPI_FAILURE, DPI_MAJOR_VERSION, DPI_MINOR_VERSION};
 use odpi::externs;
 use odpi::opaque::ODPIContext;
-use odpi::structs::{ODPICommonCreateParams, ODPIConnCreateParams, ODPIErrorInfo, ODPIVersionInfo};
+use odpi::structs::{ODPICommonCreateParams, ODPIConnCreateParams, ODPIErrorInfo,
+                    ODPIPoolCreateParams, ODPIVersionInfo};
 use public::VersionInfo;
 use slog::Logger;
 use std::{mem, ptr};
@@ -16,13 +17,13 @@ pub mod errorinfo;
 pub mod params;
 
 use self::errorinfo::ErrorInfo;
-use self::params::{Conn, Create};
+use self::params::{CommonCreate, ConnCreate, PoolCreate};
 use std::env;
 use util::ODPIStr;
 
 /// This structure represents the context in which all activity in the library takes place.
 pub struct Context {
-    /// This structure represents the context in which all activity in the library takes place.
+    /// A pointer the the ODPI-C dpiContext struct.
     context: *mut ODPIContext,
     /// Optional stdout logger.
     stdout: Option<Logger>,
@@ -68,8 +69,8 @@ impl Context {
         }
     }
 
-    /// Initializes the `Create` structure to default values.
-    pub fn init_common_create_params(&self) -> Result<Create> {
+    /// Initializes the `CommonCreate` structure to default values.
+    pub fn init_common_create_params(&self) -> Result<CommonCreate> {
         let mut ccp = unsafe { mem::uninitialized::<ODPICommonCreateParams>() };
 
         try_dpi!(externs::dpiContext_initCommonCreateParams(self.context, &mut ccp),
@@ -78,20 +79,28 @@ impl Context {
                      let driver_name_s = ODPIStr::from(driver_name);
                      ccp.driver_name = driver_name_s.ptr();
                      ccp.driver_name_length = driver_name_s.len();
-                     Ok(Create::new(ccp))
+                     Ok(CommonCreate::new(ccp))
                  },
                  ErrorKind::Context("dpiContext_initCommonCreateParams".to_string()))
     }
 
     /// Initializes the `Conn` structure to default values.
-    pub fn init_conn_create_params(&self) -> Result<Conn> {
+    pub fn init_conn_create_params(&self) -> Result<ConnCreate> {
         let mut conn = unsafe { mem::uninitialized::<ODPIConnCreateParams>() };
 
         try_dpi!(externs::dpiContext_initConnCreateParams(self.context, &mut conn),
                  {
-                     Ok(Conn::new(conn))
+                     Ok(ConnCreate::new(conn))
                  },
                  ErrorKind::Context("dpiContext_initConnCreateParams".to_string()))
+    }
+
+    /// Initializes the `Pool` structure to default values.
+    pub fn init_pool_create_params(&self) -> Result<PoolCreate> {
+        let mut pool = unsafe { mem::uninitialized::<ODPIPoolCreateParams>() };
+        try_dpi!(externs::dpiContext_initPoolCreateParams(self.context, &mut pool),
+                 Ok(PoolCreate::new(pool)),
+                 ErrorKind::Context("dpiContext_initPoolCreateParams".to_string()))
     }
 }
 
@@ -142,7 +151,7 @@ mod test {
                         assert!(ccp.get_edition() == "1.0");
                         assert!(ccp.get_driver_name() == "Rust Oracle: 0.1.0");
                     }
-                    Err(_r) => assert!(false),
+                    Err(_e) => assert!(false),
                 }
             }
             Err(_e) => assert!(false),
@@ -159,8 +168,10 @@ mod test {
                         let auth_new_flags = auth_default_flags | flags::DPI_MODE_AUTH_SYSDBA;
                         let purity_default_flags = conn.get_purity();
                         let app_ctxt = AppContext::new("ns", "name", "value");
+                        let app_ctxt_1 = AppContext::new("ns", "name1", "value1");
                         let mut app_ctxt_vec = Vec::new();
                         app_ctxt_vec.push(app_ctxt);
+                        app_ctxt_vec.push(app_ctxt_1);
 
                         assert!(purity_default_flags == flags::DPI_PURITY_DEFAULT);
 
@@ -169,6 +180,9 @@ mod test {
                         conn.set_purity(flags::DPI_PURITY_NEW);
                         conn.set_new_password("password");
                         conn.set_app_context(app_ctxt_vec);
+                        conn.set_external_auth(1);
+                        conn.set_tag("you're it");
+                        conn.set_match_any_tag(true);
 
                         let new_app_ctxt_vec = conn.get_app_context();
 
@@ -177,10 +191,72 @@ mod test {
                         assert!(conn.get_connection_class() == "conn_class");
                         assert!(conn.get_purity() == flags::DPI_PURITY_NEW);
                         assert!(conn.get_new_password() == "password");
-                        assert!(conn.get_num_app_context() == 1);
-                        assert!(new_app_ctxt_vec.len() == 1);
+                        assert!(conn.get_num_app_context() == 2);
+                        assert!(new_app_ctxt_vec.len() == 2);
+
+                        for (idx, ac) in new_app_ctxt_vec.iter().enumerate() {
+                            assert!(ac.get_namespace_name() == "ns");
+                            match idx {
+                                0 => {
+                                    assert!(ac.get_name() == "name");
+                                    assert!(ac.get_value() == "value");
+                                }
+                                1 => {
+                                    assert!(ac.get_name() == "name1");
+                                    assert!(ac.get_value() == "value1");
+                                }
+                                _ => assert!(false),
+                            }
+                        }
+
+                        assert!(conn.get_external_auth() == 1);
+                        assert!(conn.get_tag() == "you're it");
+                        assert!(conn.get_match_any_tag());
+                        assert!(conn.get_out_tag() == "");
+                        assert!(!conn.get_out_tag_found());
                     }
-                    Err(_r) => assert!(false),
+                    Err(_e) => assert!(false),
+                }
+            }
+            Err(_e) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn init_pool_create_params() {
+        match Context::create() {
+            Ok(ref mut ctxt) => {
+                match ctxt.init_pool_create_params() {
+                    Ok(ref mut pcp) => {
+                        assert!(pcp.get_min_sessions() == 1);
+                        assert!(pcp.get_max_sessions() == 1);
+                        assert!(pcp.get_session_increment() == 0);
+                        assert!(pcp.get_ping_interval() == 60);
+                        assert!(pcp.get_ping_timeout() == 5000);
+                        assert!(pcp.get_homogeneous());
+                        assert!(!pcp.get_external_auth());
+                        assert!(pcp.get_get_mode() == flags::DPI_MODE_POOL_GET_NOWAIT);
+                        assert!(pcp.get_out_pool_name() == "");
+
+                        pcp.set_min_sessions(10);
+                        pcp.set_max_sessions(100);
+                        pcp.set_session_increment(5);
+                        pcp.set_ping_interval(-1);
+                        pcp.set_ping_timeout(1000);
+                        pcp.set_homogeneous(false);
+                        pcp.set_external_auth(true);
+                        pcp.set_get_mode(flags::DPI_MODE_POOL_GET_FORCEGET);
+
+                        assert!(pcp.get_min_sessions() == 10);
+                        assert!(pcp.get_max_sessions() == 100);
+                        assert!(pcp.get_session_increment() == 5);
+                        assert!(pcp.get_ping_interval() == -1);
+                        assert!(pcp.get_ping_timeout() == 1000);
+                        assert!(!pcp.get_homogeneous());
+                        assert!(pcp.get_external_auth());
+                        assert!(pcp.get_get_mode() == flags::DPI_MODE_POOL_GET_FORCEGET);
+                    }
+                    Err(_e) => assert!(false),
                 }
             }
             Err(_e) => assert!(false),
