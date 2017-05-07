@@ -19,6 +19,10 @@ mod macros;
 pub mod common;
 pub mod connection;
 pub mod context;
+pub mod dequeue;
+pub mod enqueue;
+pub mod message;
+pub mod object;
 
 mod error;
 mod odpi;
