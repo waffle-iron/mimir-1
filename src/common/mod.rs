@@ -1,2 +1,4 @@
 //! Common Structs
-pub mod versioninfo;
+pub mod encoding;
+pub mod error;
+pub mod version;

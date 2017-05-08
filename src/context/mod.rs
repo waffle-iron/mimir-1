@@ -2,21 +2,19 @@
 //! handling as well as creating pools and standalone connections to the database. The first call to
 //! ODPI-C by any application must be `create()` which will create the context as well asvalidate
 //! the version used by the application.
+use common::{error, version};
 use error::{ErrorKind, Result};
 use odpi::constants::{DPI_FAILURE, DPI_MAJOR_VERSION, DPI_MINOR_VERSION};
 use odpi::externs;
 use odpi::opaque::ODPIContext;
 use odpi::structs::{ODPICommonCreateParams, ODPIConnCreateParams, ODPIErrorInfo,
                     ODPIPoolCreateParams, ODPISubscrCreateParams, ODPIVersionInfo};
-use common::versioninfo::VersionInfo;
 use slog::Logger;
 use std::{env, mem, ptr};
 use util::ODPIStr;
 
-pub mod errorinfo;
 pub mod params;
 
-use self::errorinfo::ErrorInfo;
 use self::params::{CommonCreate, ConnCreate, PoolCreate, SubscrCreate};
 
 /// This structure represents the context in which all activity in the library takes place.
@@ -52,8 +50,9 @@ impl Context {
     pub fn inner(&self) -> *mut ODPIContext {
         self.context
     }
+
     /// Return information about the version of the Oracle Client that is being used.
-    pub fn get_client_version(&self) -> Result<VersionInfo> {
+    pub fn get_client_version(&self) -> Result<version::Info> {
         let mut version_info = unsafe { mem::uninitialized::<ODPIVersionInfo>() };
         try_dpi!(externs::dpiContext_getClientVersion(self.context, &mut version_info),
                  Ok(version_info.into()),
@@ -64,7 +63,7 @@ impl Context {
     /// must be called with the same thread that generated the error. It must also be called before
     /// any other ODPI-C library calls are made on the calling thread since the error information
     /// specific to that thread is cleared at the start of every ODPI-C function call.
-    pub fn get_error(&self) -> ErrorInfo {
+    pub fn get_error(&self) -> error::Info {
         unsafe {
             let mut error_info = mem::uninitialized::<ODPIErrorInfo>();
             externs::dpiContext_getError(self.context, &mut error_info);

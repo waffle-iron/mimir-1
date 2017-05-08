@@ -15,14 +15,23 @@ extern crate slog;
 #[macro_use]
 mod macros;
 
+#[cfg(test)]
+extern crate rand;
+
 // Public API
 pub mod common;
 pub mod connection;
 pub mod context;
+pub mod data;
 pub mod dequeue;
 pub mod enqueue;
+pub mod lob;
 pub mod message;
 pub mod object;
+pub mod objecttype;
+pub mod statement;
+pub mod subscription;
+pub mod variable;
 
 mod error;
 mod odpi;

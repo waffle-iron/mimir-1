@@ -51,6 +51,22 @@ bitflags! {
 
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+/// This enumeration identifies the modes that are possible when dequeuing messages from a queue.
+pub enum ODPIDeqMode {
+    /// Read the message without acquiring a lock on the message (equivalent to a SELECT statement).
+    Browse = 1,
+    /// Read the message and obtain a write lock on the message (equivalent to a SELECT FOR UPDATE
+    /// statement).
+    Locked = 2,
+    /// Read the message and update or delete it. This is the default mode. Note that the message
+    /// may be retained in the queue table based on retention properties.
+    Remove = 3,
+    /// Confirms receipt of the message but does not deliver the actual message content.
+    RemoveNoData = 4,
+}
+
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[allow(dead_code)]
 /// This enumeration identifies the types of events that can take place. The event type is part of
 /// the messages that are sent to subscriptions.
@@ -94,6 +110,21 @@ bitflags! {
         /// The actual row counts can be retrieved using the function `dpiStmt_getRowCounts()`.
         const ARRAY_DML_ROWCOUNTS = 0x100000,
     }
+}
+
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+/// This enumeration identifies the delivery mode used for filtering messages when dequeuing
+/// messages from a queue.
+pub enum ODPIMessageDeliveryMode {
+    /// Not set.
+    NotSet = 0,
+    /// Dequeue only persistent messages from the queue. This is the default mode.
+    Persistent = 1,
+    /// Dequeue only buffered messages from the queue.
+    Buffered = 2,
+    /// Dequeue both persistent and buffered messages from the queue.
+    PersistentOrBuffered = 3,
 }
 
 #[repr(u32)]
@@ -375,4 +406,14 @@ bitflags! {
         /// cannot be registered in guaranteed mode.
         const DPI_SUBSCR_QOS_BEST_EFFORT = 0b00010000,
     }
+}
+
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+/// This enumeration identifies the visibility of messages in advanced queuing.
+pub enum ODPIVisibility {
+    /// The message is not part of the current transaction but constitutes a transaction of its own.
+    Immediate = 1,
+    /// The message is part of the current transaction. This is the default value.
+    OnCommit = 2,
 }

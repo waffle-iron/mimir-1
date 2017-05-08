@@ -213,6 +213,38 @@ extern "C" {
 
 #[allow(dead_code)]
 extern "C" {
+    pub fn dpiData_getBytes(data: *mut structs::ODPIData) -> *mut structs::ODPIBytes;
+    pub fn dpiData_getDouble(data: *mut structs::ODPIData) -> f64;
+}
+
+extern "C" {
+    pub fn dpiDeqOptions_getMode(options: *mut opaque::ODPIDeqOptions,
+                                 value: *mut flags::ODPIDeqMode)
+                                 -> ::std::os::raw::c_int;
+}
+
+extern "C" {
+    pub fn dpiEnqOptions_getVisibility(options: *mut opaque::ODPIEnqOptions,
+                                       value: *mut flags::ODPIVisibility)
+                                       -> ::std::os::raw::c_int;
+}
+
+extern "C" {
+    pub fn dpiLob_getChunkSize(lob: *mut opaque::ODPILob, size: *mut u32) -> ::std::os::raw::c_int;
+}
+
+extern "C" {
+    pub fn dpiMsgProps_getDeliveryMode(props: *mut opaque::ODPIMsgProps,
+                                       value: *mut flags::ODPIMessageDeliveryMode)
+                                       -> ::std::os::raw::c_int;
+}
+
+extern "C" {
+    pub fn dpiObjectType_addRef(objType: *mut opaque::ODPIObjectType) -> ::std::os::raw::c_int;
+}
+
+#[allow(dead_code)]
+extern "C" {
     pub fn dpiStmt_addRef(stmt: *mut opaque::ODPIStmt) -> ::std::os::raw::c_int;
     pub fn dpiStmt_bindByName(stmt: *mut opaque::ODPIStmt,
                               name: *const ::std::os::raw::c_char,
@@ -259,6 +291,10 @@ extern "C" {
                                  -> ::std::os::raw::c_int;
 }
 
+extern "C" {
+    pub fn dpiSubscr_addRef(subscr: *mut opaque::ODPISubscr) -> ::std::os::raw::c_int;
+}
+
 #[allow(dead_code)]
 extern "C" {
     pub fn dpiVar_addRef(var: *mut opaque::ODPIVar) -> ::std::os::raw::c_int;
@@ -278,10 +314,4 @@ extern "C" {
                                  sizeInBytes: *mut u32)
                                  -> ::std::os::raw::c_int;
     pub fn dpiVar_release(var: *mut opaque::ODPIVar) -> ::std::os::raw::c_int;
-}
-
-#[allow(dead_code)]
-extern "C" {
-    pub fn dpiData_getBytes(data: *mut structs::ODPIData) -> *mut structs::ODPIBytes;
-    pub fn dpiData_getDouble(data: *mut structs::ODPIData) -> f64;
 }
