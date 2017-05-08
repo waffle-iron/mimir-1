@@ -761,19 +761,6 @@ mod test {
         assert!(false);
     }
 
-    fn error_info(e: error::Error) {
-        use std::io::{self, Write};
-        writeln!(io::stderr(), "{}", e).expect("badness");
-        let ctxt = match *CTXT {
-            ContextResult::Ok(ref ctxt) => ctxt,
-            ContextResult::Err(ref _e) => return assert!(false),
-        };
-
-        let ctxt_error = ctxt.get_error();
-        writeln!(io::stderr(), "{}", ctxt_error).expect("badness");
-        assert!(false);
-    }
-
     #[test]
     fn create() {
         match *CONN {
@@ -826,7 +813,7 @@ mod test {
             Ok(_) => {
                 match conn.prepare_distrib_trans() {
                     Ok(commit_needed) => assert!(!commit_needed),
-                    Err(e) => error_info(e),
+                    Err(e) => ::error_info(e),
                 }
                 // let ten_millis = ::std::time::Duration::from_millis(1000);
                 // ::std::thread::sleep(ten_millis);
@@ -835,7 +822,7 @@ mod test {
                 //     Err(e) => error_info(e),
                 // }
             }
-            Err(e) => error_info(e),
+            Err(e) => ::error_info(e),
         }
     }
 
@@ -952,7 +939,7 @@ mod test {
                         "Oracle Database 12c Standard Edition Release 12.1.0.2.0 - \
                         64bit Production");
             }
-            Err(e) => error_info(e),
+            Err(e) => ::error_info(e),
         }
     }
 
@@ -1097,7 +1084,7 @@ mod test {
                     Err(_) => assert!(false),
                 }
             }
-            Err(e) => error_info(e),
+            Err(e) => ::error_info(e),
         }
     }
 

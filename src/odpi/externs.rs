@@ -243,7 +243,6 @@ extern "C" {
     pub fn dpiObjectType_addRef(objType: *mut opaque::ODPIObjectType) -> ::std::os::raw::c_int;
 }
 
-#[allow(dead_code)]
 extern "C" {
     pub fn dpiStmt_addRef(stmt: *mut opaque::ODPIStmt) -> ::std::os::raw::c_int;
     pub fn dpiStmt_bindByName(stmt: *mut opaque::ODPIStmt,
@@ -289,6 +288,7 @@ extern "C" {
                                  nativeTypeNum: *mut ::std::os::raw::c_int,
                                  data: *mut *mut structs::ODPIData)
                                  -> ::std::os::raw::c_int;
+    pub fn dpiStmt_release(stmt: *mut opaque::ODPIStmt) -> ::std::os::raw::c_int;
 }
 
 extern "C" {

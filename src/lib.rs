@@ -62,3 +62,17 @@ lazy_static! {
         }
     };
 }
+
+#[cfg(test)]
+fn error_info(e: error::Error) {
+    use std::io::{self, Write};
+    writeln!(io::stderr(), "{}", e).expect("badness");
+    let ctxt = match *CTXT {
+        ContextResult::Ok(ref ctxt) => ctxt,
+        ContextResult::Err(ref _e) => return assert!(false),
+    };
+
+    let ctxt_error = ctxt.get_error();
+    writeln!(io::stderr(), "{}", ctxt_error).expect("badness");
+    assert!(false);
+}
