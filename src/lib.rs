@@ -29,13 +29,13 @@ pub mod lob;
 pub mod message;
 pub mod object;
 pub mod objecttype;
+pub mod pool;
 pub mod statement;
 pub mod subscription;
 pub mod variable;
 
 mod error;
 mod odpi;
-pub mod pool;
 mod util;
 
 #[cfg(test)]
