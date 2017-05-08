@@ -487,7 +487,7 @@ impl Connection {
                                          object_type,
                                          &mut var_ptr,
                                          &mut data_ptr),
-                 Ok(Var::new(var_ptr, data_ptr, max_array_size)),
+                 Ok(unsafe { Var::new(var_ptr, data_ptr, max_array_size) }),
                  ErrorKind::Connection("dpiConn_newVar".to_string()))
     }
 

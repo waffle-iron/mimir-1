@@ -25,8 +25,8 @@ pub struct Var {
 impl Var {
     /// Create a new `Var` struct from the given parts.
     #[doc(hidden)]
-    pub fn new(var: *mut ODPIVar, data_arr_ptr: *mut ODPIData, size: u32) -> Var {
-        let da = unsafe { slice::from_raw_parts_mut(data_arr_ptr, size as usize) };
+    pub unsafe fn new(var: *mut ODPIVar, data_arr_ptr: *mut ODPIData, size: u32) -> Var {
+        let da = slice::from_raw_parts_mut(data_arr_ptr, size as usize);
         Var {
             inner: var,
             data_arr: da,
