@@ -9,6 +9,7 @@ use odpi::externs;
 use odpi::opaque::ODPIVar;
 use odpi::structs::ODPIData;
 use std::{ptr, slice};
+use util::ODPIStr;
 
 // TODO: Implement the setFrom* functions when needed.
 
@@ -60,12 +61,14 @@ impl Var {
     /// available when the variable is first created using the function `dpiConn_newVar()`. If a DML
     /// returning statement is executed, however, the number of allocated elements can change in
     /// addition to the memory location.
-    pub fn get_data(&self) -> Result<u32> {
+    pub fn get_data(&self) -> Result<Vec<ODPIData>> {
         let mut num_elements = 0;
         let mut data_arr_ptr = ptr::null_mut();
 
         try_dpi!(externs::dpiVar_getData(self.inner, &mut num_elements, &mut data_arr_ptr),
-                 Ok(num_elements),
+                 Ok(Vec::from(unsafe {
+                                  slice::from_raw_parts(data_arr_ptr, num_elements as usize)
+                              })),
                  ErrorKind::Var("dpiVar_getData".to_string()))
     }
 
@@ -97,5 +100,20 @@ impl Var {
         try_dpi!(externs::dpiVar_release(self.inner),
                  Ok(()),
                  ErrorKind::Var("dpiVar_release".to_string()))
+    }
+
+    /// Sets the variable value to the specified string. In the case of the variable's Oracle type
+    /// being DPI_ORACLE_TYPE_NUMBER, the string is converted to an Oracle number during the call to
+    /// this function.
+    ///
+    /// * `pos` - the array position in the variable which is to be set. The first position is 0. If
+    /// the position exceeds the number of elements allocated by the variable an error is returned.
+    /// * `value` - a string which contains the data to be set. The data is copied to the variable
+    /// buffer and does not need to be retained after this function call has completed.
+    pub fn set_from_bytes(&self, pos: u32, value: &str) -> Result<()> {
+        let value_s = ODPIStr::from(value);
+        try_dpi!(externs::dpiVar_setFromBytes(self.inner, pos, value_s.ptr(), value_s.len()),
+                 Ok(()),
+                 ErrorKind::Var("dpiVar_setFromBytes".to_string()))
     }
 }

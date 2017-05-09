@@ -25,11 +25,6 @@ impl Data {
         Data { data: &mut odpi_data as *mut ODPIData }
     }
 
-    /// Create a `Data` struct from a pointer.
-    pub fn from_ptr(data_ptr: *mut ODPIData) -> Data {
-        Data { data: data_ptr }
-    }
-
     /// Get the `data` value.
     pub fn data(&self) -> *mut ODPIData {
         self.data
@@ -47,5 +42,35 @@ impl Data {
     /// Returns the value of the data when the native type is DPI_NATIVE_TYPE_DOUBLE.
     pub fn get_double(&self) -> f64 {
         unsafe { externs::dpiData_getDouble(self.data) }
+    }
+
+    /// Sets the value of the data when the native type is DPI_NATIVE_TYPE_BYTES.
+    pub fn set_bytes(&self, s: &str) {
+        let odpi_s = ODPIStr::from(s);
+        unsafe {
+            externs::dpiData_setBytes(self.data,
+                                      odpi_s.ptr() as *mut ::std::os::raw::c_char,
+                                      odpi_s.len())
+        }
+    }
+
+    /// Sets the value of the data when the native type is DPI_NATIVE_TYPE_INT64.
+    pub fn set_int64(&self, i: i64) {
+        unsafe { externs::dpiData_setInt64(self.data, i) }
+    }
+
+    /// Set the is_naull value of the data.
+    pub fn set_is_null(&mut self, is_null: bool) -> &mut Data {
+        unsafe {
+            let mut data_deref = *self.data;
+            data_deref.is_null  = if is_null { 1 } else { 0 };
+        }
+        self
+    }
+}
+
+impl From<*mut ODPIData> for Data {
+    fn from(data: *mut ODPIData) -> Data {
+        Data { data: data }
     }
 }

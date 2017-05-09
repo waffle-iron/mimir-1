@@ -32,7 +32,6 @@ extern "C" {
                                              -> ::std::os::raw::c_int;
 }
 
-#[allow(dead_code)]
 extern "C" {
     pub fn dpiConn_addRef(conn: *mut opaque::ODPIConn) -> ::std::os::raw::c_int;
     pub fn dpiConn_beginDistribTrans(conn: *mut opaque::ODPIConn,
@@ -101,6 +100,7 @@ extern "C" {
                                    value: *mut *const ::std::os::raw::c_char,
                                    valueLength: *mut u32)
                                    -> ::std::os::raw::c_int;
+    #[allow(dead_code)]
     pub fn dpiConn_getHandle(conn: *mut opaque::ODPIConn,
                              handle: *mut *mut ::std::os::raw::c_void)
                              -> ::std::os::raw::c_int;
@@ -215,6 +215,10 @@ extern "C" {
 extern "C" {
     pub fn dpiData_getBytes(data: *mut structs::ODPIData) -> *mut structs::ODPIBytes;
     pub fn dpiData_getDouble(data: *mut structs::ODPIData) -> f64;
+    pub fn dpiData_setBytes(data: *mut structs::ODPIData,
+                            ptr: *mut ::std::os::raw::c_char,
+                            length: u32);
+    pub fn dpiData_setInt64(data: *mut structs::ODPIData, value: i64);
 }
 
 extern "C" {
@@ -273,7 +277,10 @@ extern "C" {
                            mode: flags::ODPIExecMode,
                            numQueryColumns: *mut u32)
                            -> ::std::os::raw::c_int;
-
+    pub fn dpiStmt_executeMany(stmt: *mut opaque::ODPIStmt,
+                               mode: flags::ODPIExecMode,
+                               numIters: u32)
+                               -> ::std::os::raw::c_int;
     pub fn dpiStmt_fetch(stmt: *mut opaque::ODPIStmt,
                          found: *mut ::std::os::raw::c_int,
                          bufferRowIndex: *mut u32)
@@ -314,4 +321,9 @@ extern "C" {
                                  sizeInBytes: *mut u32)
                                  -> ::std::os::raw::c_int;
     pub fn dpiVar_release(var: *mut opaque::ODPIVar) -> ::std::os::raw::c_int;
+    pub fn dpiVar_setFromBytes(var: *mut opaque::ODPIVar,
+                               pos: u32,
+                               value: *const ::std::os::raw::c_char,
+                               valueLength: u32)
+                               -> ::std::os::raw::c_int;
 }

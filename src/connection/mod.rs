@@ -1094,7 +1094,7 @@ mod test {
             ConnResult::Ok(ref conn) => conn,
             ConnResult::Err(ref _e) => return assert!(false),
         };
-        match conn.new_var(Varchar, Bytes, 5, 256, false, false) {
+        match conn.new_var(Varchar, Bytes, 5, 256, false, true) {
             Ok(var) => {
                 if let Ok(sib) = var.get_size_in_bytes() {
                     assert!(sib == 256);
@@ -1103,13 +1103,13 @@ mod test {
                 }
 
                 if let Ok(ne) = var.get_num_elements() {
-                    assert!(ne == 0);
+                    assert!(ne == 5);
                 } else {
                     assert!(false);
                 }
 
                 if let Ok(ne) = var.get_data() {
-                    assert!(ne == 5);
+                    assert!(ne.len() == 5);
                 } else {
                     assert!(false);
                 }
