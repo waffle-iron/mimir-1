@@ -706,7 +706,7 @@ impl Connection {
 
 #[cfg(test)]
 mod test {
-    use {ContextResult, CREDS, CTXT, ENC};
+    use test::{ContextResult, CREDS, CTXT, ENC};
     use connection::Connection;
     use context::Context;
     use error;
@@ -813,7 +813,7 @@ mod test {
             Ok(_) => {
                 match conn.prepare_distrib_trans() {
                     Ok(commit_needed) => assert!(!commit_needed),
-                    Err(e) => ::error_info(e),
+                    Err(e) => ::test::error_info(e),
                 }
                 // let ten_millis = ::std::time::Duration::from_millis(1000);
                 // ::std::thread::sleep(ten_millis);
@@ -822,7 +822,7 @@ mod test {
                 //     Err(e) => error_info(e),
                 // }
             }
-            Err(e) => ::error_info(e),
+            Err(e) => ::test::error_info(e),
         }
     }
 
@@ -939,7 +939,7 @@ mod test {
                         "Oracle Database 12c Standard Edition Release 12.1.0.2.0 - \
                         64bit Production");
             }
-            Err(e) => ::error_info(e),
+            Err(e) => ::test::error_info(e),
         }
     }
 
@@ -1084,7 +1084,7 @@ mod test {
                     Err(_) => assert!(false),
                 }
             }
-            Err(e) => ::error_info(e),
+            Err(e) => ::test::error_info(e),
         }
     }
 

@@ -375,7 +375,7 @@ impl Info {
 
 #[cfg(test)]
 mod test {
-    use {ContextResult, CREDS, CTXT, ENC};
+    use test::{ContextResult, CREDS, CTXT, ENC};
     use connection::Connection;
     use data::Data;
     use error;
@@ -437,10 +437,10 @@ mod test {
                             Err(_) => assert!(false),
                         }
                     }
-                    Err(e) => ::error_info(e),
+                    Err(e) => ::test::error_info(e),
                 }
             }
-            Err(e) => ::error_info(e),
+            Err(e) => ::test::error_info(e),
         }
     }
 
@@ -458,13 +458,13 @@ mod test {
                     Ok(stmt) => {
                         match stmt.bind_by_name(":username", var) {
                             Ok(_) => assert!(true),
-                            Err(e) => ::error_info(e),
+                            Err(e) => ::test::error_info(e),
                         }
                     }
-                    Err(e) => ::error_info(e),
+                    Err(e) => ::test::error_info(e),
                 }
             }
-            Err(e) => ::error_info(e),
+            Err(e) => ::test::error_info(e),
         }
     }
 
@@ -482,13 +482,13 @@ mod test {
                     Ok(stmt) => {
                         match stmt.bind_by_pos(1, var) {
                             Ok(_) => assert!(true),
-                            Err(e) => ::error_info(e),
+                            Err(e) => ::test::error_info(e),
                         }
                     }
-                    Err(e) => ::error_info(e),
+                    Err(e) => ::test::error_info(e),
                 }
             }
-            Err(e) => ::error_info(e),
+            Err(e) => ::test::error_info(e),
         }
     }
 
@@ -514,10 +514,10 @@ mod test {
                 let data = Data::new(false, ODPIDataValueUnion { as_bytes: odpi_bytes });
                 match stmt.bind_value_by_name(":username", Bytes, data) {
                     Ok(_) => assert!(true),
-                    Err(e) => ::error_info(e),
+                    Err(e) => ::test::error_info(e),
                 }
             }
-            Err(e) => ::error_info(e),
+            Err(e) => ::test::error_info(e),
         }
     }
 
@@ -581,10 +581,10 @@ mod test {
             Ok(stmt) => {
                 match stmt.close(None) {
                     Ok(_) => assert!(true),
-                    Err(e) => ::error_info(e),
+                    Err(e) => ::test::error_info(e),
                 }
             }
-            Err(e) => ::error_info(e),
+            Err(e) => ::test::error_info(e),
         }
     }
 
@@ -598,10 +598,10 @@ mod test {
             Ok(stmt) => {
                 match stmt.execute(flags::EXEC_DEFAULT) {
                     Ok(cols) => assert!(cols == 2),
-                    Err(e) => ::error_info(e),
+                    Err(e) => ::test::error_info(e),
                 }
             }
-            Err(e) => ::error_info(e),
+            Err(e) => ::test::error_info(e),
         }
     }
 
@@ -616,17 +616,17 @@ mod test {
         let stmt =
             match conn.prepare_stmt(Some("insert into username values (:1, :2)"), None, false) {
                 Ok(stmt) => stmt,
-                Err(e) => return ::error_info(e),
+                Err(e) => return ::test::error_info(e),
             };
 
         let id_var = match conn.new_var(Number, Int64, 2, 0, false, false) {
             Ok(var) => var,
-            Err(e) => return ::error_info(e),
+            Err(e) => return ::test::error_info(e),
         };
 
         let mut id_data = match id_var.get_data() {
             Ok(data) => data,
-            Err(e) => return ::error_info(e),
+            Err(e) => return ::test::error_info(e),
         };
 
         for (idx, data) in id_data.iter_mut().enumerate() {
@@ -637,29 +637,29 @@ mod test {
 
         match stmt.bind_by_pos(1, id_var) {
             Ok(_) => assert!(true),
-            Err(e) => ::error_info(e),
+            Err(e) => ::test::error_info(e),
         }
 
         let username_var = match conn.new_var(Varchar, Bytes, 2, 256, true, false) {
             Ok(var) => var,
-            Err(e) => return ::error_info(e),
+            Err(e) => return ::test::error_info(e),
         };
 
         for i in 0..2 {
             match username_var.set_from_bytes(i, "jozias") {
                 Ok(_) => assert!(true),
-                Err(e) => ::error_info(e),
+                Err(e) => ::test::error_info(e),
             }
         }
 
         match stmt.bind_by_pos(2, username_var) {
             Ok(_) => assert!(true),
-            Err(e) => ::error_info(e),
+            Err(e) => ::test::error_info(e),
         }
 
         match stmt.execute_many(flags::EXEC_DEFAULT, 2) {
             Ok(_) => assert!(true),
-            Err(e) => ::error_info(e),
+            Err(e) => ::test::error_info(e),
         }
     }
 
@@ -749,12 +749,12 @@ mod test {
         let stmt =
             match conn.prepare_stmt(Some("insert into username values (:1, :2)"), None, false) {
                 Ok(stmt) => stmt,
-                Err(e) => return ::error_info(e),
+                Err(e) => return ::test::error_info(e),
             };
 
         match stmt.get_bind_count() {
             Ok(count) => assert!(count == 2),
-            Err(e) => return ::error_info(e),
+            Err(e) => return ::test::error_info(e),
         }
     }
 
@@ -769,7 +769,7 @@ mod test {
                                            None,
                                            false) {
             Ok(stmt) => stmt,
-            Err(e) => return ::error_info(e),
+            Err(e) => return ::test::error_info(e),
         };
 
         match stmt.get_bind_names(2) {
@@ -783,7 +783,7 @@ mod test {
                     }
                 }
             }
-            Err(e) => return ::error_info(e),
+            Err(e) => return ::test::error_info(e),
         }
     }
 
@@ -798,7 +798,7 @@ mod test {
                                            None,
                                            false) {
             Ok(stmt) => stmt,
-            Err(e) => return ::error_info(e),
+            Err(e) => return ::test::error_info(e),
         };
 
         match stmt.get_info() {
@@ -806,7 +806,7 @@ mod test {
                 assert!(info.is_dml());
                 assert!(info.statement_type() == Insert);
             }
-            Err(e) => return ::error_info(e),
+            Err(e) => return ::test::error_info(e),
         }
     }
 
