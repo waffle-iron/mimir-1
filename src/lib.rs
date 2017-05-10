@@ -25,6 +25,8 @@ pub mod context;
 pub mod data;
 pub mod dequeue;
 pub mod enqueue;
+#[allow(missing_docs)]
+pub mod error;
 pub mod lob;
 pub mod message;
 pub mod object;
@@ -34,7 +36,6 @@ pub mod statement;
 pub mod subscription;
 pub mod variable;
 
-mod error;
 mod odpi;
 mod util;
 

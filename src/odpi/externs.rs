@@ -285,7 +285,33 @@ extern "C" {
                          found: *mut ::std::os::raw::c_int,
                          bufferRowIndex: *mut u32)
                          -> ::std::os::raw::c_int;
-
+    pub fn dpiStmt_fetchRows(stmt: *mut opaque::ODPIStmt,
+                             maxRows: u32,
+                             bufferRowIndex: *mut u32,
+                             numRowsFetched: *mut u32,
+                             moreRows: *mut ::std::os::raw::c_int)
+                             -> ::std::os::raw::c_int;
+    pub fn dpiStmt_getBatchErrorCount(stmt: *mut opaque::ODPIStmt,
+                                      count: *mut u32)
+                                      -> ::std::os::raw::c_int;
+    pub fn dpiStmt_getBatchErrors(stmt: *mut opaque::ODPIStmt,
+                                  numErrors: u32,
+                                  errors: *mut structs::ODPIErrorInfo)
+                                  -> ::std::os::raw::c_int;
+    pub fn dpiStmt_getBindCount(stmt: *mut opaque::ODPIStmt,
+                                count: *mut u32)
+                                -> ::std::os::raw::c_int;
+    pub fn dpiStmt_getBindNames(stmt: *mut opaque::ODPIStmt,
+                                numBindNames: u32,
+                                bindNames: *mut *const ::std::os::raw::c_char,
+                                bindNameLengths: *mut u32)
+                                -> ::std::os::raw::c_int;
+    pub fn dpiStmt_getFetchArraySize(stmt: *mut opaque::ODPIStmt,
+                                     arraySize: *mut u32)
+                                     -> ::std::os::raw::c_int;
+    pub fn dpiStmt_getInfo(stmt: *mut opaque::ODPIStmt,
+                           info: *mut structs::ODPIStmtInfo)
+                           -> ::std::os::raw::c_int;
     pub fn dpiStmt_getQueryInfo(stmt: *mut opaque::ODPIStmt,
                                 pos: u32,
                                 info: *mut structs::ODPIQueryInfo)

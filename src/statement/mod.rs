@@ -4,14 +4,15 @@
 //! `DPI_ORACLE_TYPE_STMT` is created. Statement handles can be closed by calling the function
 //! `dpiStmt_close()` or by releasing the last reference to the statement by calling the function
 //! `dpiStmt_release()`.
+use common::error;
 use data::Data;
 use error::{ErrorKind, Result};
 use odpi::externs;
-use odpi::flags::{ODPIExecMode, ODPINativeTypeNum};
+use odpi::flags::{ODPIExecMode, ODPINativeTypeNum, ODPIStatementType};
 use odpi::opaque::ODPIStmt;
-use odpi::structs::{ODPIData, ODPIQueryInfo};
+use odpi::structs::{ODPIData, ODPIQueryInfo, ODPIStmtInfo};
 use variable::Var;
-use std::{mem, ptr};
+use std::{mem, ptr, slice};
 use util::ODPIStr;
 
 /// This structure represents statements of all types (queries, DML, DLL and PL/SQL) and is
@@ -165,13 +166,126 @@ impl Statement {
     /// Fetches a single row from the statement. If the statement does not refer to a query an error
     /// is returned. All columns that have not been defined prior to this call are implicitly
     /// defined using the metadata made available when the statement was executed.
-    pub fn fetch(&self) -> Result<()> {
+    pub fn fetch(&self) -> Result<(bool, u32)> {
         let mut found = 0;
         let mut buffer_row_index = 0;
 
         try_dpi!(externs::dpiStmt_fetch(self.stmt, &mut found, &mut buffer_row_index),
-                 Ok(()),
+                 Ok((found == 1, buffer_row_index)),
                  ErrorKind::Statement("dpiStmt_fetch".to_string()))
+    }
+
+    /// Returns the number of rows that are available in the buffers defined for the query. If no
+    /// rows are currently available in the buffers, an internal fetch takes place in order to
+    /// populate them, if rows are available. If the statement does not refer to a query an error
+    /// is returned. All columns that have not been defined prior to this call are implicitly
+    /// defined using the metadata made available when the statement was executed.
+    ///
+    /// * `max_rows` - the maximum number of rows to fetch. If the number of rows available exceeds
+    /// this value only this number will be fetched.
+    ///
+    /// Returns a tuple representing (row_index, num_rows_fetched, more_rows).
+    pub fn fetch_rows(&self, max_rows: u32) -> Result<(u32, u32, bool)> {
+        let mut buffer_row_index = 0;
+        let mut num_rows_fetched = 0;
+        let mut more_rows = 0;
+
+        try_dpi!(externs::dpiStmt_fetchRows(self.stmt,
+                                            max_rows,
+                                            &mut buffer_row_index,
+                                            &mut num_rows_fetched,
+                                            &mut more_rows),
+                 Ok((buffer_row_index, num_rows_fetched, more_rows == 1)),
+                 ErrorKind::Statement("dpiStmt_fetchRows".to_string()))
+    }
+
+    /// Returns the number of batch errors that took place during the last execution with batch mode
+    /// enabled. Batch errors are only available when both the client and the server are at 12.1.
+    pub fn get_batch_error_count(&self) -> Result<u32> {
+        let mut count = 0;
+
+        try_dpi!(externs::dpiStmt_getBatchErrorCount(self.stmt, &mut count),
+                 Ok(count),
+                 ErrorKind::Statement("dpiStmt_getBatchErrorCount".to_string()))
+    }
+
+    /// Returns the batch errors that took place during the last execution with batch mode enabled.
+    /// Batch errors are only available when both the client and the server are at 12.1.
+    ///
+    /// * `num_errors` - the size of the errors array in number of elements. The number of batch
+    /// errors that are available can be determined using `get_batch_error_count()`.
+    pub fn get_batch_errors(&self, num_errors: u32) -> Result<Vec<error::Info>> {
+        let err_ptr = ptr::null_mut();
+
+        try_dpi!(externs::dpiStmt_getBatchErrors(self.stmt, num_errors, err_ptr),
+                 {
+                     let err_slice = unsafe { slice::from_raw_parts(err_ptr, num_errors as usize) };
+                     let odpi_vec = Vec::from(err_slice);
+                     let res_vec = odpi_vec.iter().map(|x| (*x).into()).collect();
+                     Ok(res_vec)
+                 },
+                 ErrorKind::Statement("dpiStmt_getBatchErrors".to_string()))
+    }
+
+    /// Returns the number of unique bind variables in the prepared statement.
+    pub fn get_bind_count(&self) -> Result<u32> {
+        let mut count = 0;
+        try_dpi!(externs::dpiStmt_getBindCount(self.stmt, &mut count),
+                 Ok(count),
+                 ErrorKind::Statement("dpiStmt_getBindCount".to_string()))
+    }
+
+    /// Returns the names of the unique bind variables in the prepared statement.
+    pub fn get_bind_names(&self, num_bind_names: u32) -> Result<Vec<String>> {
+        let mut names_vec = Vec::with_capacity(num_bind_names as usize);
+        let mut names_len_vec = Vec::with_capacity(num_bind_names as usize);
+
+        for _ in 0..num_bind_names {
+            names_vec.push(ptr::null());
+            names_len_vec.push(0);
+        }
+
+        try_dpi!(externs::dpiStmt_getBindNames(self.stmt,
+                                               num_bind_names,
+                                               names_vec.as_mut_ptr(),
+                                               names_len_vec.as_mut_ptr()),
+                 {
+                     if names_vec.len() == names_len_vec.len() {
+                         let mut res = Vec::new();
+                         for (name, name_len) in names_vec.iter().zip(names_len_vec.iter()) {
+                             let name_s = ODPIStr::new(*name, *name_len);
+                             res.push(name_s.into());
+                         }
+                         Ok(res)
+                     } else {
+                         Err(ErrorKind::Statement("".to_string()).into())
+                     }
+                 },
+                 ErrorKind::Statement("dpiStmt_getBindNames".to_string()))
+    }
+
+    /// Gets the array size used for performing fetches.
+    pub fn get_fetch_array_size(&self) -> Result<u32> {
+        let mut size = 0;
+
+        try_dpi!(externs::dpiStmt_getFetchArraySize(self.stmt, &mut size),
+                 Ok(size),
+                 ErrorKind::Statement("dpiStmt_getFetchArraySize".to_string()))
+    }
+
+    /// Returns the next implicit result available from the last execution of the statement.
+    /// Implicit results are only available when both the client and server are 12.1 or higher.
+    pub fn get_implicit_result(&self) -> Result<()> {
+        Err(ErrorKind::Statement("Not Implemented!".to_string()).into())
+    }
+
+    /// Returns information about the statement.
+    pub fn get_info(&self) -> Result<Info> {
+        let mut info = unsafe { mem::uninitialized::<ODPIStmtInfo>() };
+
+        try_dpi!(externs::dpiStmt_getInfo(self.stmt, &mut info),
+                 Ok(Info::new(info)),
+                 ErrorKind::Statement("dpiStmt_getInfo".to_string()))
     }
 
     /// Returns information about the column that is being queried.
@@ -209,6 +323,56 @@ impl Statement {
     }
 }
 
+/// This structure is used for passing information about a statement from ODPI-C. It is used by the
+/// function `Statement::getInfo()`.
+pub struct Info {
+    /// The ODPI-C stmtinfo struct.
+    inner: ODPIStmtInfo,
+}
+
+
+impl Info {
+    /// Create a new statement from an `ODPIStmtInfo` pointer
+    #[doc(hidden)]
+    pub fn new(inner: ODPIStmtInfo) -> Info {
+        Info { inner: inner }
+    }
+
+    /// Specifies if the statement refers to a query or not.
+    pub fn is_query(&self) -> bool {
+        self.inner.is_query == 1
+    }
+
+    /// Specifies if the statement refers to a PL/SQL block or not.
+    pub fn is_plsql(&self) -> bool {
+        self.inner.is_plsql == 1
+    }
+
+    /// Specifies if the statement refers to DDL (data definition language) such as creating a table
+    /// or not.
+    pub fn is_ddl(&self) -> bool {
+        self.inner.is_ddl == 1
+    }
+
+    /// Specifies if the statement refers to DML (data manipulation language) such as inserting,
+    /// updating and deleting or not.
+    pub fn is_dml(&self) -> bool {
+        self.inner.is_dml == 1
+    }
+
+    /// Specifies the type of statement that has been prepared. The is_query, is_plsql, is_ddl and
+    /// is_dml are all categorizations of this value. It will be one of the values from the
+    /// enumeration `ODPIStatementType`.
+    pub fn statement_type(&self) -> ODPIStatementType {
+        self.inner.statement_type
+    }
+
+    /// Specifies if the statement has a returning clause in it or not.
+    pub fn is_returning(&self) -> bool {
+        self.inner.is_returning == 1
+    }
+}
+
 #[cfg(test)]
 mod test {
     use {ContextResult, CTXT, ENC};
@@ -218,6 +382,7 @@ mod test {
     use odpi::flags;
     use odpi::flags::ODPINativeTypeNum::*;
     use odpi::flags::ODPIOracleTypeNum::*;
+    use odpi::flags::ODPIStatementType::*;
     use odpi::structs::{ODPIBytes, ODPIData, ODPIDataValueUnion};
     use util::ODPIStr;
 
@@ -446,7 +611,14 @@ mod test {
             ConnResult::Ok(ref conn) => conn,
             ConnResult::Err(ref _e) => return assert!(false),
         };
-        let id_var = match conn.new_var(Number, Int64, 5, 0, false, false) {
+
+        let stmt =
+            match conn.prepare_stmt(Some("insert into username values (:1, :2)"), None, false) {
+                Ok(stmt) => stmt,
+                Err(e) => return ::error_info(e),
+            };
+
+        let id_var = match conn.new_var(Number, Int64, 2, 0, false, false) {
             Ok(var) => var,
             Err(e) => return ::error_info(e),
         };
@@ -462,40 +634,179 @@ mod test {
             d.set_int64(idx as i64);
         }
 
-        let username_var = match conn.new_var(Varchar, Bytes, 5, 2, false, false) {
+        match stmt.bind_by_pos(1, id_var) {
+            Ok(_) => assert!(true),
+            Err(e) => ::error_info(e),
+        }
+
+        let username_var = match conn.new_var(Varchar, Bytes, 2, 256, true, false) {
             Ok(var) => var,
             Err(e) => return ::error_info(e),
         };
 
-        for i in 0..5 {
+        for i in 0..2 {
             match username_var.set_from_bytes(i, "jozias") {
                 Ok(_) => assert!(true),
                 Err(e) => ::error_info(e),
             }
         }
 
-        match conn.prepare_stmt(Some("insert into username values (:1, :2)"),
-                                None,
-                                false) {
-            Ok(stmt) => {
-                match stmt.bind_by_pos(1, id_var) {
-                    Ok(_) => assert!(true),
-                    Err(e) => ::error_info(e),
-                }
-
-                match stmt.bind_by_pos(2, username_var) {
-                    Ok(_) => assert!(true),
-                    Err(e) => ::error_info(e),
-                }
-
-                match stmt.execute_many(flags::EXEC_DEFAULT, 5) {
-                    Ok(_) => assert!(true),
-                    Err(e) => ::error_info(e),
-                }
-            }
+        match stmt.bind_by_pos(2, username_var) {
+            Ok(_) => assert!(true),
             Err(e) => ::error_info(e),
         }
 
+        match stmt.execute_many(flags::EXEC_DEFAULT, 2) {
+            Ok(_) => assert!(true),
+            Err(e) => ::error_info(e),
+        }
+    }
+
+    #[test]
+    fn fetch() {
+        let conn = match *CONN {
+            ConnResult::Ok(ref conn) => conn,
+            ConnResult::Err(ref _e) => return assert!(false),
+        };
+        match conn.prepare_stmt(Some("select * from username where username = 'jozias'"),
+                                None,
+                                false) {
+            Ok(stmt) => {
+                match stmt.execute(flags::EXEC_DEFAULT) {
+                    Ok(cols) => {
+                        assert!(cols == 2);
+                        match stmt.fetch() {
+                            Ok((found, buffer_row_index)) => {
+                                assert!(found);
+                                assert!(buffer_row_index == 0);
+                            }
+                            Err(_e) => assert!(false),
+                        }
+                    }
+                    Err(_e) => assert!(false),
+                }
+            }
+            Err(_e) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn fetch_rows() {
+        let conn = match *CONN {
+            ConnResult::Ok(ref conn) => conn,
+            ConnResult::Err(ref _e) => return assert!(false),
+        };
+        match conn.prepare_stmt(Some("select * from username where username like 'jozia%'"),
+                                None,
+                                false) {
+            Ok(stmt) => {
+                match stmt.execute(flags::EXEC_DEFAULT) {
+                    Ok(cols) => {
+                        assert!(cols == 2);
+                        match stmt.fetch_rows(10) {
+                            Ok((buffer_row_index, num_rows_fetched, more_rows)) => {
+                                assert!(!more_rows);
+                                assert!(buffer_row_index == 0);
+                                assert!(num_rows_fetched == 2);
+                            }
+                            Err(_e) => assert!(false),
+                        }
+                    }
+                    Err(_e) => assert!(false),
+                }
+            }
+            Err(_e) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn get_batch_error_count() {
+        let conn = match *CONN {
+            ConnResult::Ok(ref conn) => conn,
+            ConnResult::Err(ref _e) => return assert!(false),
+        };
+        match conn.prepare_stmt(Some("select * from username where username like 'jozia%'"),
+                                None,
+                                false) {
+            Ok(stmt) => {
+                match stmt.get_batch_error_count() {
+                    Ok(count) => assert!(count == 0),
+                    Err(_e) => assert!(false),
+                }
+            }
+            Err(_e) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn get_bind_count() {
+        let conn = match *CONN {
+            ConnResult::Ok(ref conn) => conn,
+            ConnResult::Err(ref _e) => return assert!(false),
+        };
+
+        let stmt =
+            match conn.prepare_stmt(Some("insert into username values (:1, :2)"), None, false) {
+                Ok(stmt) => stmt,
+                Err(e) => return ::error_info(e),
+            };
+
+        match stmt.get_bind_count() {
+            Ok(count) => assert!(count == 2),
+            Err(e) => return ::error_info(e),
+        }
+    }
+
+    #[test]
+    fn get_bind_names() {
+        let conn = match *CONN {
+            ConnResult::Ok(ref conn) => conn,
+            ConnResult::Err(ref _e) => return assert!(false),
+        };
+
+        let stmt = match conn.prepare_stmt(Some("insert into username values (:id, :username)"),
+                                           None,
+                                           false) {
+            Ok(stmt) => stmt,
+            Err(e) => return ::error_info(e),
+        };
+
+        match stmt.get_bind_names(2) {
+            Ok(names) => {
+                assert!(names.len() == 2);
+                for (idx, name) in names.iter().enumerate() {
+                    match idx {
+                        0 => assert!(name == "ID"),
+                        1 => assert!(name == "USERNAME"),
+                        _ => assert!(false),
+                    }
+                }
+            }
+            Err(e) => return ::error_info(e),
+        }
+    }
+
+    #[test]
+    fn get_info() {
+        let conn = match *CONN {
+            ConnResult::Ok(ref conn) => conn,
+            ConnResult::Err(ref _e) => return assert!(false),
+        };
+
+        let stmt = match conn.prepare_stmt(Some("insert into username values (:id, :username)"),
+                                           None,
+                                           false) {
+            Ok(stmt) => stmt,
+            Err(e) => return ::error_info(e),
+        };
+
+        match stmt.get_info() {
+            Ok(info) => {
+                assert!(info.is_dml());
+                assert!(info.statement_type() == Insert);
+            }
+            Err(e) => return ::error_info(e),
+        }
     }
 
     #[test]

@@ -63,7 +63,7 @@ impl Data {
     pub fn set_is_null(&mut self, is_null: bool) -> &mut Data {
         unsafe {
             let mut data_deref = *self.data;
-            data_deref.is_null  = if is_null { 1 } else { 0 };
+            data_deref.is_null = if is_null { 1 } else { 0 };
         }
         self
     }

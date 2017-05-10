@@ -359,6 +359,36 @@ pub enum ODPIStartupMode {
 
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+/// This enumeration identifies the type of statement that has been prepared. It is available as
+/// part of the structure `ODPIStmtInfo`.
+pub enum ODPIStatementType {
+    /// Identifies a select statement. The member `ODPIStmtInfo.is_query` will be set to 1.
+    Select = 1,
+    /// Identifies an update statement. The member `ODPIStmtInfo.is_dml` will be set to 1.
+    Update = 2,
+    /// Identifies a delete statement. The member `ODPIStmtInfo.is_dml` will be set to 1.
+    Delete = 3,
+    /// Identifies an insert statement. The member `ODPIStmtInfo.is_dml` will be set to 1.
+    Insert = 4,
+    /// Identifies a create statement. The member `ODPIStmtInfo.is_ddl` will be set to 1.
+    Create = 5,
+    /// Identifies a drop statement. The member `ODPIStmtInfo.is_ddl` will be set to 1.
+    DropDdl = 6,
+    /// Identifies an alter statement. The member `ODPIStmtInfo.is_ddl` will be set to 1.
+    Alter = 7,
+    /// Identifies an anonymous PL/SQL block starting with the keyword begin. The member
+    /// `ODPIStmtInfo.is_plsql will be set to 1.
+    Begin = 8,
+    /// Identifies an anonymous PL/SQL block starting with the keyword declare. The member
+    /// `ODPIStmtInfo.is_plsql` will be set to 1.
+    Declare = 9,
+    /// Identifies a CALL statement used for calling stored procedures and functions. The member
+    /// `ODPIStmtInfo.is_plsql` will be set to 1.
+    Call = 10,
+}
+
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 /// This enumeration identifies the namespaces supported by subscriptions.
 pub enum ODPISubscrNamespace {
     /// Identifies the namespace used for receiving notifications for database object changes

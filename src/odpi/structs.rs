@@ -395,6 +395,30 @@ pub struct ODPIQueryInfo {
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
+/// This structure is used for passing information about a statement from ODPI-C. It is used by the
+/// function `Statement::getInfo()`.
+pub struct ODPIStmtInfo {
+    /// Specifies if the statement refers to a query (1) or not (0).
+    pub is_query: ::std::os::raw::c_int,
+    /// Specifies if the statement refers to a PL/SQL block (1) or not (0).
+    pub is_plsql: ::std::os::raw::c_int,
+    /// Specifies if the statement refers to DDL (data definition language) such as creating a table
+    /// (1) or not (0).
+    pub is_ddl: ::std::os::raw::c_int,
+    /// Specifies if the statement refers to DML (data manipulation language) such as inserting,
+    /// updating and deleting (1) or not (0).
+    pub is_dml: ::std::os::raw::c_int,
+    /// Specifies the type of statement that has been prepared. The members `ODPIStmtInfo.isQuery`,
+    /// `ODPIStmtInfo.isPLSQL`, `ODPIStmtInfo.isDDL` and `ODPIStmtInfo.isDML` are all
+    /// categorizations of this value. It will be one of the values from the enumeration
+    /// `ODPIStatementType`.
+    pub statement_type: flags::ODPIStatementType,
+    /// Specifies if the statement has a returning clause in it (1) or not (0).
+    pub is_returning: ::std::os::raw::c_int,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
 /// This structure is used for creating subscriptions to messages sent for object change
 /// notification, query change notification or advanced queuing.
 pub struct ODPISubscrCreateParams {

@@ -10,7 +10,7 @@ use odpi::opaque::ODPIContext;
 use odpi::structs::{ODPICommonCreateParams, ODPIConnCreateParams, ODPIErrorInfo,
                     ODPIPoolCreateParams, ODPISubscrCreateParams, ODPIVersionInfo};
 use slog::Logger;
-use std::{env, mem, ptr};
+use std::{mem, ptr};
 use util::ODPIStr;
 
 pub mod params;
@@ -77,7 +77,7 @@ impl Context {
 
         try_dpi!(externs::dpiContext_initCommonCreateParams(self.context, &mut ccp),
                  {
-                     let driver_name = format!("Rust Oracle: {}", env::var("CARGO_PKG_VERSION")?);
+                     let driver_name = "Rust Oracle: 0.1.0";
                      let driver_name_s = ODPIStr::from(driver_name);
                      ccp.driver_name = driver_name_s.ptr();
                      ccp.driver_name_length = driver_name_s.len();
