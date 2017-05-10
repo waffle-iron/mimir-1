@@ -40,6 +40,7 @@ pub mod message;
 pub mod object;
 pub mod objecttype;
 pub mod pool;
+pub mod query;
 pub mod statement;
 pub mod subscription;
 pub mod variable;

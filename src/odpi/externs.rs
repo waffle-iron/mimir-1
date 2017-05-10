@@ -320,6 +320,9 @@ extern "C" {
     pub fn dpiStmt_getInfo(stmt: *mut opaque::ODPIStmt,
                            info: *mut structs::ODPIStmtInfo)
                            -> ::std::os::raw::c_int;
+    pub fn dpiStmt_getNumQueryColumns(stmt: *mut opaque::ODPIStmt,
+                                      numQueryColumns: *mut u32)
+                                      -> ::std::os::raw::c_int;
     pub fn dpiStmt_getQueryInfo(stmt: *mut opaque::ODPIStmt,
                                 pos: u32,
                                 info: *mut structs::ODPIQueryInfo)
@@ -329,7 +332,15 @@ extern "C" {
                                  nativeTypeNum: *mut ::std::os::raw::c_int,
                                  data: *mut *mut structs::ODPIData)
                                  -> ::std::os::raw::c_int;
+    pub fn dpiStmt_getRowCount(stmt: *mut opaque::ODPIStmt,
+                               count: *mut u64)
+                               -> ::std::os::raw::c_int;
     pub fn dpiStmt_release(stmt: *mut opaque::ODPIStmt) -> ::std::os::raw::c_int;
+    pub fn dpiStmt_scroll(stmt: *mut opaque::ODPIStmt,
+                          mode: flags::ODPIFetchMode,
+                          offset: i32,
+                          rowCountOffset: i32)
+                          -> ::std::os::raw::c_int;
 }
 
 extern "C" {

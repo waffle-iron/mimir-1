@@ -122,6 +122,31 @@ bitflags! {
 
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+/// This enumeration identifies the mode to use when scrolling the cursor to a new location using
+/// the function `Statement::scroll()`.
+pub enum ODPIFetchMode {
+    /// Scroll the cursor to the next row in the result set. The offset is ignored when using this
+    /// mode.
+    Next = 2,
+    /// Scroll the cursor to the first row in the result set. The offset is ignored when using this
+    /// mode.
+    First = 4,
+    /// Scroll the cursor to the last row in the result set. The offset is ignored when using this
+    /// mode.
+    Last = 8,
+    /// Scroll the cursor to the previous row in the result set. The offset is ignored when using
+    /// this mode.
+    Prior = 16,
+    /// Scroll the cursor to the row identified by the offset parameter using absolute positioning.
+    Absolte = 32,
+    /// Scroll the cursor to the row identified by the offset parameter using relative positioning.
+    /// A positive number will move forward in the result set while a negative number will move
+    /// backwards in the result set.
+    Relative = 64,
+}
+
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 /// This enumeration identifies the delivery mode used for filtering messages when dequeuing
 /// messages from a queue.
 pub enum ODPIMessageDeliveryMode {
@@ -140,6 +165,8 @@ pub enum ODPIMessageDeliveryMode {
 /// This enumeration identifies the type of data that is being transferred to and from the database.
 #[allow(dead_code)]
 pub enum ODPINativeTypeNum {
+    /// An invalid native type num.
+    Invalid = 0,
     /// Data is passed as a 64-bit integer in the asInt64 member of dpiData.value.
     Int64 = 3000,
     /// Data is passed as an unsigned 64-bit integer in the asUint64 member of dpiData.value.
@@ -168,6 +195,27 @@ pub enum ODPINativeTypeNum {
     Boolean = 3011,
     /// Data is passed as a reference to a rowid in the asRowid member of dpiData.value.
     Rowid = 3012,
+}
+
+impl From<i32> for ODPINativeTypeNum {
+    fn from(val: i32) -> ODPINativeTypeNum {
+        match val {
+            3000 => ODPINativeTypeNum::Int64,
+            3001 => ODPINativeTypeNum::Uint64,
+            3002 => ODPINativeTypeNum::Float,
+            3003 => ODPINativeTypeNum::Double,
+            3004 => ODPINativeTypeNum::Bytes,
+            3005 => ODPINativeTypeNum::Timestamp,
+            3006 => ODPINativeTypeNum::IntervalDS,
+            3007 => ODPINativeTypeNum::IntervalYM,
+            3008 => ODPINativeTypeNum::Lob,
+            3009 => ODPINativeTypeNum::Object,
+            3010 => ODPINativeTypeNum::Stmt,
+            3011 => ODPINativeTypeNum::Boolean,
+            3012 => ODPINativeTypeNum::Rowid,
+            _ => ODPINativeTypeNum::Invalid,
+        }
+    }
 }
 
 bitflags! {

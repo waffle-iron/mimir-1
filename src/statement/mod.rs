@@ -16,12 +16,13 @@ use common::error;
 use data::Data;
 use error::{ErrorKind, Result};
 use odpi::externs;
-use odpi::flags::{ODPIExecMode, ODPINativeTypeNum, ODPIStatementType};
+use odpi::flags::{ODPIExecMode, ODPIFetchMode, ODPINativeTypeNum, ODPIStatementType};
 use odpi::opaque::ODPIStmt;
 use odpi::structs::{ODPIData, ODPIQueryInfo, ODPIStmtInfo};
-use variable::Var;
+use query;
 use std::{mem, ptr, slice};
 use util::ODPIStr;
+use variable::Var;
 
 /// This structure represents statements of all types (queries, DML, DLL and PL/SQL) and is
 /// available by handle to a calling application or driver.
@@ -288,7 +289,7 @@ impl Statement {
     }
 
     /// Returns information about the statement.
-    pub fn get_info(&self) -> Result<Info> {
+    pub fn get_info(&self) -> Result<self::Info> {
         let mut info = unsafe { mem::uninitialized::<ODPIStmtInfo>() };
 
         try_dpi!(externs::dpiStmt_getInfo(self.stmt, &mut info),
@@ -296,29 +297,57 @@ impl Statement {
                  ErrorKind::Statement("dpiStmt_getInfo".to_string()))
     }
 
+    /// Returns the number of columns that are being queried.
+    pub fn get_num_query_columns(&self) -> Result<u32> {
+        let mut cols = 0;
+
+        try_dpi!(externs::dpiStmt_getNumQueryColumns(self.stmt, &mut cols),
+                 Ok(cols),
+                 ErrorKind::Statement("dpiStmt_getNumQueryColumns".to_string()))
+    }
+
     /// Returns information about the column that is being queried.
-    pub fn get_query_info(&self, pos: u32) -> Result<String> {
+    pub fn get_query_info(&self, pos: u32) -> Result<query::Info> {
         let mut qi = unsafe { mem::uninitialized::<ODPIQueryInfo>() };
 
         try_dpi!(externs::dpiStmt_getQueryInfo(self.stmt, pos, &mut qi),
-                 {
-                     let name_s = ODPIStr::new(qi.name, qi.name_length);
-                     Ok(name_s.into())
-                 },
+                 Ok(query::Info::new(qi)),
                  ErrorKind::Statement("dpiStmt_getQueryInfo".to_string()))
     }
 
     /// Returns the value of the column at the given position for the currently fetched row, without
     /// needing to provide a variable.
-    pub fn get_query_value(&self, pos: u32) -> Result<(i32, *mut ODPIData)> {
+    pub fn get_query_value(&self, pos: u32) -> Result<(ODPINativeTypeNum, *mut ODPIData)> {
         let mut data = ptr::null_mut();
-        let mut native_type = 0i32;
+        let mut native_type = 0;
 
         try_dpi!(externs::dpiStmt_getQueryValue(self.stmt, pos, &mut native_type, &mut data),
-                 Ok((native_type, data)),
+                 Ok((native_type.into(), data)),
                  ErrorKind::Statement("dpiStmt_getQueryValue".to_string()))
     }
 
+    /// Returns the number of rows affected by the last DML statement that was executed or the
+    /// number of rows currently fetched from a query. In all other cases 0 is returned.
+    pub fn get_row_count(&self) -> Result<u64> {
+        let mut count = 0;
+
+        try_dpi!(externs::dpiStmt_getRowCount(self.stmt, &mut count),
+                 Ok(count),
+                 ErrorKind::Statement("dpiStmt_getRowCount".to_string()))
+    }
+
+    /// Returns an array of row counts affected by the last invocation of `Statement::executeMany()`
+    /// with the array DML rowcounts mode enabled. This feature is only available if both client and
+    /// server are at 12.1.
+    pub fn get_row_counts(&self) -> Result<Vec<u64>> {
+        Err(ErrorKind::Statement("Not Implemented!".to_string()).into())
+    }
+
+    /// Returns the id of the query that was just registered on the subscription by calling
+    /// `Statement::execute()` on a statement prepared by calling `Subscription::prepare_stmt()`.
+    pub fn get_subscr_query_id(&self) -> Result<u64> {
+        Err(ErrorKind::Statement("Not Implemented!".to_string()).into())
+    }
 
     /// Releases a reference to the statement. A count of the references to the statement is
     /// maintained and when this count reaches zero, the memory associated with the statement is
@@ -328,6 +357,27 @@ impl Statement {
         try_dpi!(externs::dpiStmt_release(self.stmt),
                  Ok(()),
                  ErrorKind::Statement("dpiStmt_release".to_string()))
+    }
+
+    /// Scrolls the statement to the position in the cursor specified by the mode and offset.
+    ///
+    /// * `mode` - one of the values from the enumeration `ODPIFetchMode`.
+    /// * `offset` - a value which is used with the mode in order to determine the row position in
+    /// the cursor.
+    /// * `row_count_offset` -
+    pub fn scroll(&self, mode: ODPIFetchMode, offset: i32, row_count_offset: i32) -> Result<()> {
+        try_dpi!(externs::dpiStmt_scroll(self.stmt, mode, offset, row_count_offset),
+                 Ok(()),
+                 ErrorKind::Statement("dpiStmt_scroll".to_string()))
+    }
+
+    /// Sets the array size used for performing fetches. All variables defined for fetching must
+    /// have this many (or more) elements allocated for them. The higher this value is the less
+    /// network round trips are required to fetch rows from the database but more memory is also
+    /// required. A value of zero will reset the array size to the default value of
+    /// DPI_DEFAULT_FETCH_ARRAY_SIZE.
+    pub fn set_fetch_array_size(&self, array_size: u32) -> Result<()> {
+        Err(ErrorKind::Statement("Not Implemented!".to_string()).into())
     }
 }
 
@@ -388,6 +438,7 @@ mod test {
     use data::Data;
     use error;
     use odpi::flags;
+    use odpi::flags::ODPIFetchMode::*;
     use odpi::flags::ODPINativeTypeNum::*;
     use odpi::flags::ODPIOracleTypeNum::*;
     use odpi::flags::ODPIStatementType::*;
@@ -819,7 +870,30 @@ mod test {
     }
 
     #[test]
-    fn query_info() {
+    fn get_num_query_columns() {
+        let conn = match *CONN {
+            ConnResult::Ok(ref conn) => conn,
+            ConnResult::Err(ref _e) => return assert!(false),
+        };
+
+        let stmt = match conn.prepare_stmt(Some("select * from username"), None, false) {
+            Ok(stmt) => stmt,
+            Err(e) => return ::test::error_info(e),
+        };
+
+        match stmt.execute(flags::EXEC_DEFAULT) {
+            Ok(_) => assert!(true),
+            Err(e) => return ::test::error_info(e),
+        }
+
+        match stmt.get_num_query_columns() {
+            Ok(cols) => assert_eq!(cols, 2),
+            Err(e) => return ::test::error_info(e),
+        }
+    }
+
+    #[test]
+    fn get_query_info() {
         let conn = match *CONN {
             ConnResult::Ok(ref conn) => conn,
             ConnResult::Err(ref _e) => return assert!(false),
@@ -832,23 +906,45 @@ mod test {
                     Ok(cols) => {
                         assert!(cols == 2);
                         match stmt.get_query_info(1) {
-                            Ok(qi) => assert!(qi == "ID"),
-                            Err(_e) => assert!(false),
+                            Ok(qi) => {
+                                assert_eq!(qi.name(), "ID");
+                                assert_eq!(qi.oracle_type_num(), Number);
+                                assert_eq!(qi.default_native_type_num(), Double);
+                                assert_eq!(qi.db_size_in_bytes(), 0);
+                                assert_eq!(qi.client_size_in_bytes(), 0);
+                                assert_eq!(qi.size_in_chars(), 0);
+                                assert_eq!(qi.precision(), 38);
+                                assert_eq!(qi.scale(), 0);
+                                assert!(!qi.null_ok());
+                                assert!(qi.object_type().is_none());
+                            }
+                            Err(e) => return ::test::error_info(e),
                         }
                         match stmt.get_query_info(2) {
-                            Ok(qi) => assert!(qi == "USERNAME"),
-                            Err(_e) => assert!(false),
+                            Ok(qi) => {
+                                assert!(qi.name() == "USERNAME");
+                                assert_eq!(qi.oracle_type_num(), Varchar);
+                                assert_eq!(qi.default_native_type_num(), Bytes);
+                                assert_eq!(qi.db_size_in_bytes(), 256);
+                                assert_eq!(qi.client_size_in_bytes(), 1024);
+                                assert_eq!(qi.size_in_chars(), 256);
+                                assert_eq!(qi.precision(), 0);
+                                assert_eq!(qi.scale(), 0);
+                                assert!(qi.null_ok());
+                                assert!(qi.object_type().is_none());
+                            }
+                            Err(e) => return ::test::error_info(e),
                         }
                     }
-                    Err(_e) => assert!(false),
+                    Err(e) => return ::test::error_info(e),
                 }
             }
-            Err(_e) => assert!(false),
+            Err(e) => return ::test::error_info(e),
         }
     }
 
     #[test]
-    fn query_value() {
+    fn get_query_value() {
         let conn = match *CONN {
             ConnResult::Ok(ref conn) => conn,
             ConnResult::Err(ref _e) => return assert!(false),
@@ -866,17 +962,17 @@ mod test {
                         }
                         match stmt.get_query_value(1) {
                             Ok((t, ptr)) => {
-                                assert!(t == 3003);
+                                assert_eq!(t, Double);
                                 let data: Data = ptr.into();
-                                assert!(data.get_double() == 1.0);
+                                assert_eq!(data.get_double(), 1.0);
                             }
                             Err(_e) => assert!(false),
                         }
                         match stmt.get_query_value(2) {
                             Ok((t, ptr)) => {
-                                assert!(t == 3004);
+                                assert_eq!(t, Bytes);
                                 let data: Data = ptr.into();
-                                assert!(data.get_bytes() == "jozias");
+                                assert_eq!(data.get_bytes(), "jozias");
                             }
                             Err(_e) => assert!(false),
                         }
@@ -885,6 +981,62 @@ mod test {
                 }
             }
             Err(_e) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn get_row_count() {
+        let conn = match *CONN {
+            ConnResult::Ok(ref conn) => conn,
+            ConnResult::Err(ref _e) => return assert!(false),
+        };
+
+        let stmt = match conn.prepare_stmt(Some("select * from username"), None, false) {
+            Ok(stmt) => stmt,
+            Err(e) => return ::test::error_info(e),
+        };
+
+        match stmt.execute(flags::EXEC_DEFAULT) {
+            Ok(cols) => {
+                assert!(cols == 2);
+                match stmt.fetch_rows(10) {
+                    Ok(_) => assert!(true),
+                    Err(e) => return ::test::error_info(e),
+                }
+                match stmt.get_row_count() {
+                    Ok(rc) => assert_eq!(rc, 2),
+                    Err(e) => return ::test::error_info(e),
+                }
+            }
+            Err(e) => return ::test::error_info(e),
+        }
+    }
+
+    #[test]
+    fn scroll() {
+        let conn = match *CONN {
+            ConnResult::Ok(ref conn) => conn,
+            ConnResult::Err(ref _e) => return assert!(false),
+        };
+
+        let stmt = match conn.prepare_stmt(Some("select * from username"), None, true) {
+            Ok(stmt) => stmt,
+            Err(e) => return ::test::error_info(e),
+        };
+
+        match stmt.execute(flags::EXEC_DEFAULT) {
+            Ok(cols) => {
+                assert!(cols == 2);
+                match stmt.fetch_rows(10) {
+                    Ok(_) => assert!(true),
+                    Err(e) => return ::test::error_info(e),
+                }
+                match stmt.scroll(Last, 0, 0) {
+                    Ok(_) => assert!(true),
+                    Err(e) => return ::test::error_info(e),
+                }
+            }
+            Err(e) => return ::test::error_info(e),
         }
     }
 }
