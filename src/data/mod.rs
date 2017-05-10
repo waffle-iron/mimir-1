@@ -1,3 +1,11 @@
+// Copyright (c) 2017 oic developers
+//
+// Licensed under the Apache License, Version 2.0
+// <LICENSE-APACHE or http://www.apache.org/licenses/LICENSE-2.0> or the MIT
+// license <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. All files in the project carrying such notice may not be copied,
+// modified, or distributed except according to those terms.
+
 //! All of these functions are used for getting and setting the various members of the dpiData
 //! structure. The members of the structure can be manipulated directly but some languages
 //! (such as Go) do not have the ability to manipulate structures containing unions or the ability

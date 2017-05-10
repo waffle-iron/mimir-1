@@ -1,3 +1,11 @@
+// Copyright (c) 2017 oic developers
+//
+// Licensed under the Apache License, Version 2.0
+// <LICENSE-APACHE or http://www.apache.org/licenses/LICENSE-2.0> or the MIT
+// license <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. All files in the project carrying such notice may not be copied,
+// modified, or distributed except according to those terms.
+
 //! Object type handles are used to represent types such as those created by the SQL command CREATE
 //! OR REPLACE TYPE. They are created using the function `Connection::get_object_type()` or
 //! implicitly when fetching from a column containing objects by calling the function
