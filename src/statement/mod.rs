@@ -375,7 +375,7 @@ impl Info {
 
 #[cfg(test)]
 mod test {
-    use {ContextResult, CTXT, ENC};
+    use {ContextResult, CREDS, CTXT, ENC};
     use connection::Connection;
     use data::Data;
     use error;
@@ -409,9 +409,10 @@ mod test {
                 },
                 Err(e) => return ConnResult::Err(e),
             };
+
             match Connection::create(ctxt,
-                                     Some("jozias"),
-                                     Some("chip18jj"),
+                                     Some(&CREDS[0]),
+                                     Some(&CREDS[1]),
                                      Some("//oic.cbsnae86d3iv.us-east-2.rds.amazonaws.com/ORCL"),
                                      Some(ccp),
                                      None) {
@@ -565,8 +566,8 @@ mod test {
         };
         let conn =
             match Connection::create(ctxt,
-                                     Some("jozias"),
-                                     Some("chip18jj"),
+                                     Some(&CREDS[0]),
+                                     Some(&CREDS[1]),
                                      Some("//oic.cbsnae86d3iv.us-east-2.rds.amazonaws.com/ORCL"),
                                      Some(ccp),
                                      None) {

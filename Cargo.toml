@@ -1,6 +1,13 @@
 [package]
 authors = ["Jason Ozias <jason.g.ozias@gmail.com>"]
+description = "Rust bindings over the Oracle Database Programming Interface for Drivers and Applications"
+documentation = "http://rustyhorde.github.io/oic-rs"
+homepage = "http://rustyhorde.github.io/oic-rs"
+keywords = ["oracle", "driver", "bindings"]
+license = "MIT/Apache-2.0"
 name = "oic"
+readme = "README.md"
+repository = "https://github.com/rustyhorde/oic-rs"
 version = "0.1.0"
 
 [build-dependencies]

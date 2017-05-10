@@ -100,9 +100,9 @@ macro_rules! with_conn {
                 ctxt.set_encoding("UTF-8");
                 ctxt.set_nchar_encoding("UTF-8");
                 match Connection::connect(ctxt,
-                                        Some("jozias"),
-                                        Some("chip18jj"),
-                                        "//oic.cbsnae86d3iv.us-east-2.rds.amazonaws.com/ORCL") {
+                                          Some(&CREDS[0]),
+                                          Some(&CREDS[1]),
+                                          "//oic.cbsnae86d3iv.us-east-2.rds.amazonaws.com/ORCL") {
                     $tst => { $b }
                     Err(_e) => {
                         use std::io::{self, Write};
@@ -124,9 +124,9 @@ macro_rules! with_stmt {
                 ctxt.set_encoding("UTF-8");
                 ctxt.set_nchar_encoding("UTF-8");
                 match Connection::connect(ctxt,
-                                        Some("jozias"),
-                                        Some("chip18jj"),
-                                        "//oic.cbsnae86d3iv.us-east-2.rds.amazonaws.com/ORCL") {
+                                          Some(&CREDS[0]),
+                                          Some(&CREDS[1]),
+                                          "//oic.cbsnae86d3iv.us-east-2.rds.amazonaws.com/ORCL") {
                     Ok(conn) => {
                         match conn.prepare_stmt($stmt, None, false) {
                             $tst => { $b }

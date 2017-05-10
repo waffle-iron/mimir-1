@@ -54,6 +54,16 @@ unsafe impl Sync for ContextResult {}
 #[cfg(test)]
 lazy_static! {
     static ref ENC: CString = CString::new("UTF-8").expect("badness");
+    static ref CREDS: Vec<String> = {
+        use std::fs::File;
+        use std::io::{BufRead, BufReader};
+        let file = File::open("/home/jozias/projects/rust-lang/oic-rs/.creds/oic-test")
+            .expect("bad creds");
+        let mut buf_reader = BufReader::new(file);
+        let mut creds = String::new();
+        let _ = buf_reader.read_line(&mut creds).expect("bad creds");
+        creds.split(":").map(|x| x.trim_right().to_string()).collect()
+    };
     static ref CTXT: ContextResult = {
         match context::Context::create() {
             Ok(ctxt) => {
