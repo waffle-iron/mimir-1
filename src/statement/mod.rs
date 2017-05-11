@@ -376,7 +376,7 @@ impl Statement {
     /// network round trips are required to fetch rows from the database but more memory is also
     /// required. A value of zero will reset the array size to the default value of
     /// DPI_DEFAULT_FETCH_ARRAY_SIZE.
-    pub fn set_fetch_array_size(&self, array_size: u32) -> Result<()> {
+    pub fn set_fetch_array_size(&self, _array_size: u32) -> Result<()> {
         Err(ErrorKind::Statement("Not Implemented!".to_string()).into())
     }
 }

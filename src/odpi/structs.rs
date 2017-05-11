@@ -9,6 +9,7 @@
 //! ODPI-C Public Structs.
 use odpi::{externs, flags, opaque};
 use std::os::raw::{c_char, c_int, c_void};
+use std::ptr;
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
@@ -165,6 +166,30 @@ pub struct ODPIConnCreateParams {
     /// member. It is only filled in if the connection was acquired from a session pool and a tag
     /// was initially specified.
     pub out_tag_found: c_int,
+}
+
+impl Default for ODPIConnCreateParams {
+    fn default() -> ODPIConnCreateParams {
+        ODPIConnCreateParams {
+            auth_mode: flags::DPI_MODE_AUTH_DEFAULT,
+            connection_class: ptr::null(),
+            connection_class_length: 0,
+            purity: flags::DPI_PURITY_DEFAULT,
+            new_password: ptr::null(),
+            new_password_length: 0,
+            app_context: ptr::null_mut(),
+            num_app_context: 0,
+            external_auth: 0,
+            external_handle: ptr::null_mut(),
+            pool: ptr::null_mut(),
+            tag: ptr::null(),
+            tag_length: 0,
+            match_any_tag: 0,
+            out_tag: ptr::null(),
+            out_tag_length: 0,
+            out_tag_found: 0,
+        }
+    }
 }
 
 #[repr(C)]

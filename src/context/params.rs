@@ -189,6 +189,7 @@ impl CommonCreate {
 /// `init_common_conn_params` function. Care should be taken to ensure a copy of this structure
 /// exists only as long as needed to create the connection since it can contain a clear text copy of
 /// credentials used for connecting to the database.
+#[derive(Default)]
 pub struct ConnCreate {
     /// The ODPI-C dpiConnCreateParams struct.
     conn: ODPIConnCreateParams,
@@ -354,12 +355,12 @@ impl ConnCreate {
     /// Specifies the session pool from which to acquire a connection or NULL if a standalone
     /// connection should be created. The default value is NULL.
     pub fn get_pool(&self) -> Pool {
-        Pool::from_odpi(self.conn.pool)
+        self.conn.pool.into()
     }
 
     /// Set the `pool` value.
     pub fn set_pool(&mut self, pool: Pool) -> &mut ConnCreate {
-        self.conn.pool = pool.get_pool();
+        self.conn.pool = pool.inner();
         self
     }
 

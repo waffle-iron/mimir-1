@@ -256,6 +256,27 @@ extern "C" {
 }
 
 extern "C" {
+    pub fn dpiPool_acquireConnection(pool: *mut opaque::ODPIPool,
+                                     userName: *const ::std::os::raw::c_char,
+                                     userNameLength: u32,
+                                     password: *const ::std::os::raw::c_char,
+                                     passwordLength: u32,
+                                     createParams: *mut structs::ODPIConnCreateParams,
+                                     conn: *mut *mut opaque::ODPIConn)
+                                     -> ::std::os::raw::c_int;
+    pub fn dpiPool_create(context: *const opaque::ODPIContext,
+                          userName: *const ::std::os::raw::c_char,
+                          userNameLength: u32,
+                          password: *const ::std::os::raw::c_char,
+                          passwordLength: u32,
+                          connectString: *const ::std::os::raw::c_char,
+                          connectStringLength: u32,
+                          commonParams: *const structs::ODPICommonCreateParams,
+                          createParams: *mut structs::ODPIPoolCreateParams,
+                          pool: *mut *mut opaque::ODPIPool)
+                          -> ::std::os::raw::c_int;
+}
+extern "C" {
     pub fn dpiStmt_addRef(stmt: *mut opaque::ODPIStmt) -> ::std::os::raw::c_int;
     pub fn dpiStmt_bindByName(stmt: *mut opaque::ODPIStmt,
                               name: *const ::std::os::raw::c_char,

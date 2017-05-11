@@ -60,6 +60,10 @@ error_chain! {
             description("OCI Error!")
             display("OCI Error! {}", err)
         }
+        Pool(fn_name: String) {
+            description("Pool: call to ODPI-C function failed!")
+            display("Pool: call to '{}' function failed!", fn_name)
+        }
         Statement(fn_name: String) {
             description("Statement: call to ODPI-C function failed!")
             display("Statement: call to '{}' function failed!", fn_name)
