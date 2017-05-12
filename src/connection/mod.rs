@@ -8,8 +8,8 @@
 
 //! Connection handles are used to represent connections to the database. These can be standalone
 //! connections created by calling the function `create()` or acquired from a session pool by
-//! calling the function `acquireConnection()`. They can be closed by calling the function `close()`
-//!  or releasing the last reference to the connection by calling the function `release()`.
+//! calling the function `Pool::acquireConnection()`. They can be closed by calling the function
+//! `close()` or releasing the last reference to the connection by calling the function `release()`.
 //! Connection handles are used to create all handles other than session pools and context handles.
 use common::{encoding, version};
 use context::Context;
@@ -477,8 +477,8 @@ impl Connection {
         let mut data_ptr = ptr::null_mut();
         let object_type = ptr::null_mut();
 
-        let sib = if size_is_bytes { 0 } else { 1 };
-        let ia = if is_array { 0 } else { 1 };
+        let sib = if size_is_bytes { 1 } else { 0 };
+        let ia = if is_array { 1 } else { 0 };
 
         /// TODO: Fix object_type when Object is implemented fully.
         try_dpi!(externs::dpiConn_newVar(self.inner,
@@ -1108,10 +1108,10 @@ mod test {
             ConnResult::Ok(ref conn) => conn,
             ConnResult::Err(ref _e) => return assert!(false),
         };
-        match conn.new_var(Varchar, Bytes, 5, 256, false, true) {
+        match conn.new_var(Varchar, Bytes, 5, 256, false, false) {
             Ok(var) => {
                 if let Ok(sib) = var.get_size_in_bytes() {
-                    assert!(sib == 256);
+                    assert!(sib == 1024);
                 } else {
                     assert!(false);
                 }

@@ -6,6 +6,7 @@
 // option. All files in the project carrying such notice may not be copied,
 // modified, or distributed except according to those terms.
 
+//! [NOT IMPL]
 //! Object type handles are used to represent types such as those created by the SQL command CREATE
 //! OR REPLACE TYPE. They are created using the function `Connection::get_object_type()` or
 //! implicitly when fetching from a column containing objects by calling the function

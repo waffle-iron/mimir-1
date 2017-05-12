@@ -6,15 +6,16 @@
 // option. All files in the project carrying such notice may not be copied,
 // modified, or distributed except according to those terms.
 
-//! Deque Options
+//! [NOT IMPL]
+//! Enque Options
 use error::{ErrorKind, Result};
 use odpi::{externs, flags};
 use odpi::opaque::ODPIEnqOptions;
 
-/// ODPI-C Deque Options wrapper.
+/// ODPI-C Enque Options wrapper.
 #[derive(Clone)]
 pub struct Options {
-    /// The ODPI-C DeqOptions pointer.
+    /// The ODPI-C EnqOptions pointer.
     inner: *mut ODPIEnqOptions,
 }
 

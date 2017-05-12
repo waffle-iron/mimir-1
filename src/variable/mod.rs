@@ -6,20 +6,19 @@
 // option. All files in the project carrying such notice may not be copied,
 // modified, or distributed except according to those terms.
 
+//! [NOT IMPL]
 //! Variable handles are used to represent memory areas used for transferring data to and from the
-//! database. They are created by calling the function `dpiConn_newVar()`. They are destroyed when
-//! the last reference to the variable is released by calling the function `dpiVar_release()`. They
-//! are bound to statements by calling the function `dpiStmt_bindByName()` or the function
-//! `dpiStmt_bindByPos()`. They can also be used for fetching data from the database by calling the
-//! function `dpiStmt_define()`.
+//! database. They are created by calling the function `Connection::newVar()`. They are destroyed
+//! when the last reference to the variable is released by calling the function `release()`. They
+//! are bound to statements by calling the function `Statement::bindByName()` or the function
+//! `Statement::bindByPos()`. They can also be used for fetching data from the database by calling
+//! the function `Statement::define()`.
 use error::{ErrorKind, Result};
 use odpi::externs;
 use odpi::opaque::ODPIVar;
 use odpi::structs::ODPIData;
 use std::{ptr, slice};
 use util::ODPIStr;
-
-// TODO: Implement the setFrom* functions when needed.
 
 /// This structure represents memory areas used for transferring data to and from the database and
 /// is available by handle to a calling application or driver.
@@ -58,6 +57,14 @@ impl Var {
     }
 
     /// Copies the data from one variable to another variable.
+    ///
+    /// * `src_pos` - the array position from which the data is to be copied. The first position is
+    /// 0. If the array position specified exceeds the number of elements allocated in the source
+    /// variable, an error is returned.
+    /// * `dst` - the variable into which data is to be copied.
+    /// * `dst_pos` - the array position into which the data is to be copied. The first position is
+    /// 0. If the array position specified exceeds the number of elements allocated in the variable,
+    /// an error is returned.
     pub fn copy_data(&self, src_pos: u32, dst: &mut Var, dst_pos: u32) -> Result<()> {
         try_dpi!(externs::dpiVar_copyData(dst.inner(), dst_pos, self.inner, src_pos),
                  Ok(()),
@@ -66,9 +73,9 @@ impl Var {
 
     /// Returns a pointer to an array of `ODPIData` structures used for transferring data to and
     /// from the database. These structures are allocated by the variable itself and are made
-    /// available when the variable is first created using the function `dpiConn_newVar()`. If a DML
-    /// returning statement is executed, however, the number of allocated elements can change in
-    /// addition to the memory location.
+    /// available when the variable is first created using the function `Connection::new_var()`. If
+    /// a DML returning statement is executed, however, the number of allocated elements can change
+    /// in addition to the memory location.
     pub fn get_data(&self) -> Result<Vec<ODPIData>> {
         let mut num_elements = 0;
         let mut data_arr_ptr = ptr::null_mut();
@@ -123,5 +130,55 @@ impl Var {
         try_dpi!(externs::dpiVar_setFromBytes(self.inner, pos, value_s.ptr(), value_s.len()),
                  Ok(()),
                  ErrorKind::Var("dpiVar_setFromBytes".to_string()))
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use test::CREDS;
+    use connection::Connection;
+    use context::Context;
+    use error::Result;
+    use odpi::flags::ODPIConnCloseMode::*;
+    use odpi::flags::ODPINativeTypeNum::*;
+    use odpi::flags::ODPIOracleTypeNum::*;
+    use std::ffi::CString;
+
+    fn var_res() -> Result<()> {
+        let ctxt = Context::create()?;
+
+        let mut ccp = ctxt.init_common_create_params()?;
+        let enc_cstr = CString::new("UTF-8").expect("badness");
+        ccp.set_encoding(enc_cstr.as_ptr());
+        ccp.set_nchar_encoding(enc_cstr.as_ptr());
+
+        let conn = Connection::create(&ctxt,
+                                       Some(&CREDS[0]),
+                                       Some(&CREDS[1]),
+                                       Some("//oic.cbsnae86d3iv.us-east-2.rds.amazonaws.com/ORCL",),
+                                       Some(ccp),
+                                       None)?;
+
+        conn.add_ref()?;
+
+        let _var = conn.new_var(Number, Int64, 2, 0, false, false)?;
+
+        conn.release()?;
+        conn.close(DefaultClose, None)?;
+
+        Ok(())
+    }
+
+    #[test]
+    pub fn var() {
+        use std::io::{self, Write};
+
+        match var_res() {
+            Ok(_) => assert!(true),
+            Err(e) => {
+                writeln!(io::stderr(), "{}", e).expect("badness");
+                assert!(false);
+            }
+        }
     }
 }

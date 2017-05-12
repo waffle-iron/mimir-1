@@ -6,6 +6,7 @@
 // option. All files in the project carrying such notice may not be copied,
 // modified, or distributed except according to those terms.
 
+//! [NOT IMPL]
 //! This structure is used for passing query metadata from ODPI-C.
 use objecttype::ObjectType;
 use odpi::flags;

@@ -7,11 +7,11 @@
 // modified, or distributed except according to those terms.
 
 //! Statement handles are used to represent statements of all types (queries, DML, DDL and PL/SQL).
-//! They are created by calling the function `dpiConn_prepareStmt()` or the function
-//! `dpiSubscr_prepareStmt()`. They are also created implicitly when a variable of type
+//! They are created by calling the function `Connection::prepareStmt()` or the function
+//! `Subscription::prepareStmt()`. They are also created implicitly when a variable of type
 //! `DPI_ORACLE_TYPE_STMT` is created. Statement handles can be closed by calling the function
-//! `dpiStmt_close()` or by releasing the last reference to the statement by calling the function
-//! `dpiStmt_release()`.
+//! `close()` or by releasing the last reference to the statement by calling the function
+//! `release()`.
 use common::error;
 use data::Data;
 use error::{ErrorKind, Result};
@@ -665,7 +665,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn execute_many() {
         let conn = match *CONN {
             ConnResult::Ok(ref conn) => conn,

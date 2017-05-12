@@ -6,6 +6,7 @@
 // option. All files in the project carrying such notice may not be copied,
 // modified, or distributed except according to those terms.
 
+//! [NOT IMPL]
 //! All of these functions are used for getting and setting the various members of the dpiData
 //! structure. The members of the structure can be manipulated directly but some languages
 //! (such as Go) do not have the ability to manipulate structures containing unions or the ability
@@ -67,7 +68,7 @@ impl Data {
         unsafe { externs::dpiData_setInt64(self.data, i) }
     }
 
-    /// Set the is_naull value of the data.
+    /// Set the is_null value of the data.
     pub fn set_is_null(&mut self, is_null: bool) -> &mut Data {
         unsafe {
             let mut data_deref = *self.data;

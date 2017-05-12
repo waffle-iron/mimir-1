@@ -6,6 +6,7 @@
 // option. All files in the project carrying such notice may not be copied,
 // modified, or distributed except according to those terms.
 
+//! [NOT IMPL]
 //! Subscription handles are used to represent subscriptions to events such as continuous query
 //! notification and object change notification. They are created by calling the function
 //! `Connection::new_subscription()` and are destroyed by calling the function
