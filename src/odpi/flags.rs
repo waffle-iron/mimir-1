@@ -251,7 +251,6 @@ bitflags! {
 /// This enumeration identifies the types of Oracle data that can be used for binding data as
 /// arguments to a statement, fetching data from the database, or getting and setting object
 /// attributes and element values.
-#[allow(dead_code)]
 pub enum ODPIOracleTypeNum {
     /// None type.
     TypeNone = 2000,
@@ -342,33 +341,31 @@ pub enum ODPIOracleTypeNum {
     Max = 2027,
 }
 
-bitflags! {
-    #[repr(C)]
-    /// This enumeration identifies the mode to use when getting sessions from a session pool.
-    pub flags ODPIPoolGetMode: u32 {
-        /// Specifies that the caller should block until a session is available from the pool.
-        const DPI_MODE_POOL_GET_WAIT     = 0b00000000,
-        /// Specifies that the caller should return immediately, regardless of whether a session is
-        /// available in the pool. If a session is not available an error is returned.
-        const DPI_MODE_POOL_GET_NOWAIT   = 0b00000001,
-        /// Specifies that a new session should be created if all of the sessions in the pool are
-        /// busy, even if this exceeds the maximum sessions allowable for the session pool (see
-        /// `dpiPoolCreateParams.maxSessions`)
-        const DPI_MODE_POOL_GET_FORCEGET = 0b00000010,
-    }
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+/// This enumeration identifies the mode to use when getting sessions from a session pool.
+pub enum ODPIPoolGetMode {
+    /// Specifies that the caller should block until a session is available from the pool.
+    Wait = 0b00000000,
+    /// Specifies that the caller should return immediately, regardless of whether a session is
+    /// available in the pool. If a session is not available an error is returned.
+    NoWait = 0b00000001,
+    /// Specifies that a new session should be created if all of the sessions in the pool are
+    /// busy, even if this exceeds the maximum sessions allowable for the session pool (see
+    /// `dpiPoolCreateParams.maxSessions`)
+    ForceGet = 0b00000010,
 }
 
-bitflags! {
-    #[repr(C)]
-    /// This enumeration identifies the mode to use when closing pools.
-    pub flags ODPIPoolCloseMode: u32 {
-        /// Default value used when closing pools. If there are any active sessions in the pool an
-        /// error will be raised.
-        const DPI_MODE_POOL_CLOSE_DEFAULT = 0b00000000,
-        /// Causes all of the active connections in the pool to be closed before closing the pool
-        /// itself.
-        const DPI_MODE_POOL_CLOSE_FORCE =   0b00000001,
-    }
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+/// This enumeration identifies the mode to use when closing pools.
+pub enum ODPIPoolCloseMode {
+    /// Default value used when closing pools. If there are any active sessions in the pool an error
+    /// will be raised.
+    DefaultClose = 0,
+    /// Causes all of the active connections in the pool to be closed before closing the pool
+    /// itself.
+    ForceClose = 1,
 }
 
 bitflags! {
@@ -431,6 +428,8 @@ pub enum ODPIStartupMode {
 /// This enumeration identifies the type of statement that has been prepared. It is available as
 /// part of the structure `ODPIStmtInfo`.
 pub enum ODPIStatementType {
+    /// Statement type not set.
+    NotSet = 0,
     /// Identifies a select statement. The member `ODPIStmtInfo.is_query` will be set to 1.
     Select = 1,
     /// Identifies an update statement. The member `ODPIStmtInfo.is_dml` will be set to 1.

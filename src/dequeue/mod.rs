@@ -10,7 +10,6 @@
 use error::{ErrorKind, Result};
 use odpi::{externs, flags};
 use odpi::opaque::ODPIDeqOptions;
-use std::mem;
 
 /// ODPI-C Deque Options wrapper.
 #[derive(Clone)]
@@ -27,7 +26,7 @@ impl Options {
 
     /// Returns the mode that is to be used when dequeuing messages.
     pub fn get_mode(&self) -> Result<flags::ODPIDeqMode> {
-        let mut deq_mod_ptr = unsafe { mem::uninitialized::<flags::ODPIDeqMode>() };
+        let mut deq_mod_ptr = flags::ODPIDeqMode::Browse;
 
         try_dpi!(externs::dpiDeqOptions_getMode(self.inner, &mut deq_mod_ptr),
                  Ok(deq_mod_ptr),

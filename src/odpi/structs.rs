@@ -61,7 +61,9 @@ pub struct ODPIBytes {
 /// This structure is used when creating session pools and standalone connections to the
 /// database.
 pub struct ODPICommonCreateParams {
-    /// The mode to use when creating connections to the database.
+    /// Specifies the mode used for creating connections. It is expected to be one or more of the
+    /// values from the enumeration `ODPICreateMode`, OR'ed together. The default value is
+    /// DPI_MODE_CREATE_DEFAULT.
     pub create_mode: flags::ODPICreateMode,
     /// Specifies the encoding to use for CHAR data, as a null-terminated ASCII string. Either an
     /// IANA or Oracle specific character set name is expected. NULL is also acceptable which
@@ -85,6 +87,20 @@ pub struct ODPICommonCreateParams {
     /// Specifies the length of the dpiCommonCreateParams.driverName member, in bytes. The default
     /// value is 0.
     pub driver_name_length: u32,
+}
+
+impl Default for ODPICommonCreateParams {
+    fn default() -> ODPICommonCreateParams {
+        ODPICommonCreateParams {
+            create_mode: flags::DPI_MODE_CREATE_DEFAULT,
+            encoding: ptr::null(),
+            nchar_encoding: ptr::null(),
+            edition: ptr::null(),
+            edition_length: 0,
+            driver_name: ptr::null(),
+            driver_name_length: 0,
+        }
+    }
 }
 
 #[repr(C)]
@@ -272,6 +288,17 @@ pub struct ODPIEncodingInfo {
     pub nchar_max_bytes_per_character: i32,
 }
 
+impl Default for ODPIEncodingInfo {
+    fn default() -> ODPIEncodingInfo {
+        ODPIEncodingInfo {
+            encoding: ptr::null(),
+            max_bytes_per_character: 0,
+            nchar_encoding: ptr::null(),
+            nchar_max_bytes_per_character: 0,
+        }
+    }
+}
+
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]
 /// This structure is used for transferring error information from ODPI-C. All of the strings
@@ -303,6 +330,22 @@ pub struct ODPIErrorInfo {
     /// A boolean value indicating if the error is recoverable. This member always has a value of 0
     /// unless both client and server are at release 12.1 or higher.
     pub is_recoverable: c_int,
+}
+
+impl Default for ODPIErrorInfo {
+    fn default() -> ODPIErrorInfo {
+        ODPIErrorInfo {
+            code: 0,
+            offset: 0,
+            message: ptr::null(),
+            message_length: 0,
+            encoding: ptr::null(),
+            fn_name: ptr::null(),
+            action: ptr::null(),
+            sql_state: ptr::null(),
+            is_recoverable: 0,
+        }
+    }
 }
 
 #[repr(C)]
@@ -384,6 +427,23 @@ pub struct ODPIPoolCreateParams {
     pub out_pool_name_length: u32,
 }
 
+impl Default for ODPIPoolCreateParams {
+    fn default() -> ODPIPoolCreateParams {
+        ODPIPoolCreateParams {
+            min_sessions: 0,
+            max_sessions: 1,
+            session_increment: 0,
+            ping_interval: 60,
+            ping_timeout: 5000,
+            homogeneous: 0,
+            external_auth: 0,
+            get_mode: flags::ODPIPoolGetMode::NoWait,
+            out_pool_name: ptr::null(),
+            out_pool_name_length: 0,
+        }
+    }
+}
+
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
 /// This structure is used for passing query metadata from ODPI-C. It is populated by the function
@@ -426,6 +486,24 @@ pub struct ODPIQueryInfo {
     pub object_type: *mut opaque::ODPIObjectType,
 }
 
+impl Default for ODPIQueryInfo {
+    fn default() -> ODPIQueryInfo {
+        ODPIQueryInfo {
+            name: ptr::null(),
+            name_length: 0,
+            oracle_type_num: flags::ODPIOracleTypeNum::TypeNone,
+            default_native_type_num: flags::ODPINativeTypeNum::Invalid,
+            db_size_in_bytes: 0,
+            client_size_in_bytes: 0,
+            size_in_chars: 0,
+            precision: 0,
+            scale: 0,
+            null_ok: 0,
+            object_type: ptr::null_mut(),
+        }
+    }
+}
+
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
 /// This structure is used for passing information about a statement from ODPI-C. It is used by the
@@ -448,6 +526,19 @@ pub struct ODPIStmtInfo {
     pub statement_type: flags::ODPIStatementType,
     /// Specifies if the statement has a returning clause in it (1) or not (0).
     pub is_returning: ::std::os::raw::c_int,
+}
+
+impl Default for ODPIStmtInfo {
+    fn default() -> ODPIStmtInfo {
+        ODPIStmtInfo {
+            is_query: 0,
+            is_plsql: 0,
+            is_ddl: 0,
+            is_dml: 0,
+            statement_type: flags::ODPIStatementType::NotSet,
+            is_returning: 0,
+        }
+    }
 }
 
 #[repr(C)]
@@ -508,6 +599,25 @@ pub struct ODPISubscrCreateParams {
     /// Specifies the length of the dpiSubscrCreateParams.recipientName member, in bytes. The
     /// default value is 0.
     pub recipient_name_length: u32,
+}
+
+impl Default for ODPISubscrCreateParams {
+    fn default() -> ODPISubscrCreateParams {
+        ODPISubscrCreateParams {
+            subscr_namespace: flags::ODPISubscrNamespace::DbChange,
+            protocol: flags::ODPISubscrProtocol::Callback,
+            qos: flags::DPI_SUBSCR_QOS_NONE,
+            operations: flags::DPI_OPCODE_ALL_OPS,
+            port_number: 0,
+            timeout: 0,
+            name: ptr::null(),
+            name_length: 0,
+            callback: None,
+            callback_context: ptr::null_mut(),
+            recipient_name: ptr::null(),
+            recipient_name_length: 0,
+        }
+    }
 }
 
 #[repr(C)]
@@ -618,4 +728,17 @@ pub struct ODPIVersionInfo {
     /// Specifies the full version (all five components) as a number that is suitable for
     /// comparison with the result of the macro DPI_ORACLE_VERSION_TO_NUMBER.
     pub full_version_num: u32,
+}
+
+impl Default for ODPIVersionInfo {
+    fn default() -> ODPIVersionInfo {
+        ODPIVersionInfo {
+            version_num: 0,
+            release_num: 0,
+            update_num: 0,
+            port_release_num: 0,
+            port_update_num: 0,
+            full_version_num: 0,
+        }
+    }
 }

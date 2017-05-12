@@ -279,7 +279,38 @@ extern "C" {
                           createParams: *mut structs::ODPIPoolCreateParams,
                           pool: *mut *mut opaque::ODPIPool)
                           -> ::std::os::raw::c_int;
+    pub fn dpiPool_getBusyCount(pool: *mut opaque::ODPIPool,
+                                value: *mut u32)
+                                -> ::std::os::raw::c_int;
+    pub fn dpiPool_getEncodingInfo(pool: *mut opaque::ODPIPool,
+                                   info: *mut structs::ODPIEncodingInfo)
+                                   -> ::std::os::raw::c_int;
+    pub fn dpiPool_getGetMode(pool: *mut opaque::ODPIPool,
+                              value: *mut flags::ODPIPoolGetMode)
+                              -> ::std::os::raw::c_int;
+    pub fn dpiPool_getMaxLifetimeSession(pool: *mut opaque::ODPIPool,
+                                         value: *mut u32)
+                                         -> ::std::os::raw::c_int;
+    pub fn dpiPool_getOpenCount(pool: *mut opaque::ODPIPool,
+                                value: *mut u32)
+                                -> ::std::os::raw::c_int;
+    pub fn dpiPool_getStmtCacheSize(pool: *mut opaque::ODPIPool,
+                                    cacheSize: *mut u32)
+                                    -> ::std::os::raw::c_int;
+    pub fn dpiPool_getTimeout(pool: *mut opaque::ODPIPool,
+                              value: *mut u32)
+                              -> ::std::os::raw::c_int;
     pub fn dpiPool_release(pool: *mut opaque::ODPIPool) -> ::std::os::raw::c_int;
+    pub fn dpiPool_setGetMode(pool: *mut opaque::ODPIPool,
+                              value: flags::ODPIPoolGetMode)
+                              -> ::std::os::raw::c_int;
+    pub fn dpiPool_setMaxLifetimeSession(pool: *mut opaque::ODPIPool,
+                                         value: u32)
+                                         -> ::std::os::raw::c_int;
+    pub fn dpiPool_setStmtCacheSize(pool: *mut opaque::ODPIPool,
+                                    cacheSize: u32)
+                                    -> ::std::os::raw::c_int;
+    pub fn dpiPool_setTimeout(pool: *mut opaque::ODPIPool, value: u32) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn dpiStmt_addRef(stmt: *mut opaque::ODPIStmt) -> ::std::os::raw::c_int;

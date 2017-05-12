@@ -15,3 +15,9 @@ pub struct Object {
     /// The ODPI-C Object pointer.
     pub inner: *mut ODPIObject,
 }
+
+impl From<*mut ODPIObject> for Object {
+    fn from(inner: *mut ODPIObject) -> Object {
+        Object { inner: inner }
+    }
+}

@@ -11,7 +11,6 @@ repository = "https://github.com/rustyhorde/oic-rs"
 version = "0.1.0"
 
 [build-dependencies]
-bindgen = "0.23.1"
 gcc = "0.3.45"
 
 [dependencies]

@@ -18,7 +18,7 @@ use odpi::opaque::ODPIContext;
 use odpi::structs::{ODPICommonCreateParams, ODPIConnCreateParams, ODPIErrorInfo,
                     ODPIPoolCreateParams, ODPISubscrCreateParams, ODPIVersionInfo};
 use slog::Logger;
-use std::{mem, ptr};
+use std::ptr;
 use util::ODPIStr;
 
 pub mod params;
@@ -39,7 +39,7 @@ impl Context {
     /// Create a new `Context` struct.
     pub fn create() -> Result<Context> {
         let mut ctxt = ptr::null_mut();
-        let mut err = unsafe { mem::uninitialized::<ODPIErrorInfo>() };
+        let mut err: ODPIErrorInfo = Default::default();
 
         try_dpi!(externs::dpiContext_create(DPI_MAJOR_VERSION,
                                             DPI_MINOR_VERSION,
@@ -61,7 +61,7 @@ impl Context {
 
     /// Return information about the version of the Oracle Client that is being used.
     pub fn get_client_version(&self) -> Result<version::Info> {
-        let mut version_info = unsafe { mem::uninitialized::<ODPIVersionInfo>() };
+        let mut version_info: ODPIVersionInfo = Default::default();
         try_dpi!(externs::dpiContext_getClientVersion(self.context, &mut version_info),
                  Ok(version_info.into()),
                  ErrorKind::Connection("dpiContext_getClientVersion".to_string()))
@@ -72,8 +72,8 @@ impl Context {
     /// any other ODPI-C library calls are made on the calling thread since the error information
     /// specific to that thread is cleared at the start of every ODPI-C function call.
     pub fn get_error(&self) -> error::Info {
+        let mut error_info: ODPIErrorInfo = Default::default();
         unsafe {
-            let mut error_info = mem::uninitialized::<ODPIErrorInfo>();
             externs::dpiContext_getError(self.context, &mut error_info);
             error_info.into()
         }
@@ -81,7 +81,7 @@ impl Context {
 
     /// Initializes the `CommonCreate` structure to default values.
     pub fn init_common_create_params(&self) -> Result<CommonCreate> {
-        let mut ccp = unsafe { mem::uninitialized::<ODPICommonCreateParams>() };
+        let mut ccp: ODPICommonCreateParams = Default::default();
 
         try_dpi!(externs::dpiContext_initCommonCreateParams(self.context, &mut ccp),
                  {
@@ -96,18 +96,16 @@ impl Context {
 
     /// Initializes the `ConnCreate` structure to default values.
     pub fn init_conn_create_params(&self) -> Result<ConnCreate> {
-        let mut conn = unsafe { mem::uninitialized::<ODPIConnCreateParams>() };
+        let mut conn: ODPIConnCreateParams = Default::default();
 
         try_dpi!(externs::dpiContext_initConnCreateParams(self.context, &mut conn),
-                 {
-                     Ok(ConnCreate::new(conn))
-                 },
+                 Ok(ConnCreate::new(conn)),
                  ErrorKind::Context("dpiContext_initConnCreateParams".to_string()))
     }
 
     /// Initializes the `PoolCreate` structure to default values.
     pub fn init_pool_create_params(&self) -> Result<PoolCreate> {
-        let mut pool = unsafe { mem::uninitialized::<ODPIPoolCreateParams>() };
+        let mut pool: ODPIPoolCreateParams = Default::default();
         try_dpi!(externs::dpiContext_initPoolCreateParams(self.context, &mut pool),
                  Ok(PoolCreate::new(pool)),
                  ErrorKind::Context("dpiContext_initPoolCreateParams".to_string()))
@@ -115,7 +113,7 @@ impl Context {
 
     /// Initializes the `SubscrCreate` struct to default values.
     pub fn init_subscr_create_params(&self) -> Result<SubscrCreate> {
-        let mut subscr = unsafe { mem::uninitialized::<ODPISubscrCreateParams>() };
+        let mut subscr: ODPISubscrCreateParams = Default::default();
         try_dpi!(externs::dpiContext_initSubscrCreateParams(self.context, &mut subscr),
                  Ok(SubscrCreate::new(subscr)),
                  ErrorKind::Context("dpiContext_initSubscrCreateParams".to_string()))
@@ -255,7 +253,7 @@ mod test {
                         assert!(pcp.get_ping_timeout() == 5000);
                         assert!(pcp.get_homogeneous());
                         assert!(!pcp.get_external_auth());
-                        assert!(pcp.get_get_mode() == flags::DPI_MODE_POOL_GET_NOWAIT);
+                        assert!(pcp.get_get_mode() == flags::ODPIPoolGetMode::NoWait);
                         assert!(pcp.get_out_pool_name() == "");
 
                         pcp.set_min_sessions(10);
@@ -265,7 +263,7 @@ mod test {
                         pcp.set_ping_timeout(1000);
                         pcp.set_homogeneous(false);
                         pcp.set_external_auth(true);
-                        pcp.set_get_mode(flags::DPI_MODE_POOL_GET_FORCEGET);
+                        pcp.set_get_mode(flags::ODPIPoolGetMode::ForceGet);
 
                         assert!(pcp.get_min_sessions() == 10);
                         assert!(pcp.get_max_sessions() == 100);
@@ -274,7 +272,7 @@ mod test {
                         assert!(pcp.get_ping_timeout() == 1000);
                         assert!(!pcp.get_homogeneous());
                         assert!(pcp.get_external_auth());
-                        assert!(pcp.get_get_mode() == flags::DPI_MODE_POOL_GET_FORCEGET);
+                        assert!(pcp.get_get_mode() == flags::ODPIPoolGetMode::ForceGet);
                     }
                     Err(_e) => assert!(false),
                 }

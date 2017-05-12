@@ -22,11 +22,11 @@ use message::Properties;
 use object::Object;
 use objecttype::ObjectType;
 use odpi::{externs, flags};
-use odpi::opaque::{ODPIConn, ODPIObject};
+use odpi::opaque::ODPIConn;
 use odpi::structs::{ODPIEncodingInfo, ODPIVersionInfo};
 use slog::Logger;
 use statement::Statement;
-use std::{mem, ptr};
+use std::ptr;
 use subscription::Subscription;
 use util::ODPIStr;
 use variable::Var;
@@ -215,7 +215,7 @@ impl Connection {
                         props: &Properties)
                         -> Result<(String, Object)> {
         let queue_s = ODPIStr::from(queue_name);
-        let mut payload = unsafe { mem::uninitialized::<ODPIObject>() };
+        let payload = ptr::null_mut();
         let mut pdst = ptr::null();
         let mut dstlen = 0;
 
@@ -224,10 +224,10 @@ impl Connection {
                                             queue_s.len(),
                                             options.inner(),
                                             props.inner(),
-                                            &mut payload,
+                                            payload,
                                             &mut pdst,
                                             &mut dstlen),
-                 Ok((ODPIStr::new(pdst, dstlen).into(), Object { inner: &mut payload })),
+                 Ok((ODPIStr::new(pdst, dstlen).into(), payload.into())),
                  ErrorKind::Connection("dpiConn_deqObject".to_string()))
     }
 
@@ -244,7 +244,7 @@ impl Connection {
                           options: &enqueue::Options,
                           props: &Properties)
                           -> Result<(String, Object)> {
-        let mut payload = unsafe { mem::uninitialized::<ODPIObject>() };
+        let payload = ptr::null_mut();
         let queue_s = ODPIStr::from(queue_name);
         let mut pdst = ptr::null();
         let mut dstlen = 0;
@@ -254,10 +254,10 @@ impl Connection {
                                             queue_s.len(),
                                             options.inner(),
                                             props.inner(),
-                                            &mut payload,
+                                            payload,
                                             &mut pdst,
                                             &mut dstlen),
-                 Ok((ODPIStr::new(pdst, dstlen).into(), Object { inner: &mut payload })),
+                 Ok((ODPIStr::new(pdst, dstlen).into(), payload.into())),
                  ErrorKind::Connection("dpiConn_enqObject".to_string()))
     }
 
@@ -285,7 +285,7 @@ impl Connection {
     /// values passed when the standalone connection or session pool was created, or the values
     /// retrieved from the environment variables NLS_LANG and NLS_NCHAR.
     pub fn get_encoding_info(&self) -> Result<encoding::Info> {
-        let mut encoding_info = unsafe { mem::uninitialized::<ODPIEncodingInfo>() };
+        let mut encoding_info: ODPIEncodingInfo = Default::default();
         // TODO: Return the encoding info object.
         try_dpi!(externs::dpiConn_getEncodingInfo(self.inner, &mut encoding_info),
                  Ok(encoding_info.into()),
@@ -354,7 +354,7 @@ impl Connection {
     pub fn get_server_version(&self) -> Result<version::Info> {
         let mut pdst = ptr::null();
         let mut dstlen = 0;
-        let mut version_info = unsafe { mem::uninitialized::<ODPIVersionInfo>() };
+        let mut version_info: ODPIVersionInfo = Default::default();
 
         try_dpi!(externs::dpiConn_getServerVersion(self.inner,
                                                    &mut pdst,

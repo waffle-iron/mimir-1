@@ -10,7 +10,6 @@
 use error::{ErrorKind, Result};
 use odpi::{externs, flags};
 use odpi::opaque::ODPIEnqOptions;
-use std::mem;
 
 /// ODPI-C Deque Options wrapper.
 #[derive(Clone)]
@@ -28,7 +27,7 @@ impl Options {
     /// Returns whether the message being enqueued is part of the current transaction or constitutes
     /// a transaction on its own.
     pub fn get_visibility(&self) -> Result<flags::ODPIVisibility> {
-        let mut enq_vis_ptr = unsafe { mem::uninitialized::<flags::ODPIVisibility>() };
+        let mut enq_vis_ptr = flags::ODPIVisibility::Immediate;
 
         try_dpi!(externs::dpiEnqOptions_getVisibility(self.inner, &mut enq_vis_ptr),
                  Ok(enq_vis_ptr),

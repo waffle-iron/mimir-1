@@ -20,7 +20,7 @@ use odpi::flags::{ODPIExecMode, ODPIFetchMode, ODPINativeTypeNum, ODPIStatementT
 use odpi::opaque::ODPIStmt;
 use odpi::structs::{ODPIData, ODPIQueryInfo, ODPIStmtInfo};
 use query;
-use std::{mem, ptr, slice};
+use std::{ptr, slice};
 use util::ODPIStr;
 use variable::Var;
 
@@ -290,7 +290,7 @@ impl Statement {
 
     /// Returns information about the statement.
     pub fn get_info(&self) -> Result<self::Info> {
-        let mut info = unsafe { mem::uninitialized::<ODPIStmtInfo>() };
+        let mut info: ODPIStmtInfo = Default::default();
 
         try_dpi!(externs::dpiStmt_getInfo(self.stmt, &mut info),
                  Ok(Info::new(info)),
@@ -308,7 +308,7 @@ impl Statement {
 
     /// Returns information about the column that is being queried.
     pub fn get_query_info(&self, pos: u32) -> Result<query::Info> {
-        let mut qi = unsafe { mem::uninitialized::<ODPIQueryInfo>() };
+        let mut qi: ODPIQueryInfo = Default::default();
 
         try_dpi!(externs::dpiStmt_getQueryInfo(self.stmt, pos, &mut qi),
                  Ok(query::Info::new(qi)),

@@ -10,7 +10,6 @@
 use error::{ErrorKind, Result};
 use odpi::{externs, flags};
 use odpi::opaque::ODPIMsgProps;
-use std::mem;
 
 /// ODPI-C Message Props wrapper.
 #[derive(Clone)]
@@ -27,7 +26,7 @@ impl Properties {
 
     /// Returns the mode that was used to deliver the message.
     pub fn get_delivery_mode(&self) -> Result<flags::ODPIMessageDeliveryMode> {
-        let mut del_mode_ptr = unsafe { mem::uninitialized::<flags::ODPIMessageDeliveryMode>() };
+        let mut del_mode_ptr = flags::ODPIMessageDeliveryMode::NotSet;
 
         try_dpi!(externs::dpiMsgProps_getDeliveryMode(self.inner, &mut del_mode_ptr),
                  Ok(del_mode_ptr.into()),
