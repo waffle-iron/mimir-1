@@ -14,7 +14,7 @@ use connection::Connection;
 use context::Context;
 use context::params::{CommonCreate, ConnCreate, PoolCreate};
 use error::{ErrorKind, Result};
-use odpi::externs;
+use odpi::{externs, flags};
 use odpi::opaque::{ODPIConn, ODPIPool};
 use std::ptr;
 use util::ODPIStr;
@@ -68,6 +68,24 @@ impl Pool {
                                                     &mut conn),
                  Ok(conn.into()),
                  ErrorKind::Pool("dpiPool_acquireConnection".to_string()))
+    }
+
+    /// Adds a reference to the pool. This is intended for situations where a reference to the pool
+    /// needs to be maintained independently of the reference returned when the pool was created.
+    pub fn add_ref(&self) -> Result<()> {
+        try_dpi!(externs::dpiPool_addRef(self.inner),
+                 Ok(()),
+                 ErrorKind::Pool("dpiPool_addRef".to_string()))
+    }
+
+    /// Closes the pool and makes it unusable for further activity.
+    ///
+    /// * `close_mode` - one or more of the values from the enumeration `ODPIPoolCloseMode`, OR'ed
+    /// together.
+    pub fn close(&self, close_mode: flags::ODPIPoolCloseMode) -> Result<()> {
+        try_dpi!(externs::dpiPool_close(self.inner, close_mode),
+                 Ok(()),
+                 ErrorKind::Pool("dpiPool_close".to_string()))
     }
 
     /// Creates a session pool which creates and maintains a group of stateless sessions to the
@@ -127,6 +145,15 @@ impl Pool {
                  Ok(inner.into()),
                  ErrorKind::Pool("dpiPool_create".to_string()))
     }
+
+    /// Releases a reference to the pool. A count of the references to the pool is maintained and
+    /// when this count reaches zero, the memory associated with the pool is freed and the session
+    /// pool is closed if that has not already taken place using the function `Pool::close()`.
+    pub fn release(&self) -> Result<()> {
+        try_dpi!(externs::dpiPool_release(self.inner),
+                 Ok(()),
+                 ErrorKind::Pool("dpiPool_release".to_string()))
+    }
 }
 
 impl From<*mut ODPIPool> for Pool {
@@ -175,11 +202,54 @@ mod test {
             }
         };
     }
+
     #[test]
     fn create() {
         match *POOL {
             PoolResult::Ok(ref _pool) => assert!(true),
             PoolResult::Err(ref _e) => assert!(false),
+        }
+    }
+
+    #[test]
+    fn acquire_connection() {
+        let pool = match *POOL {
+            PoolResult::Ok(ref pool) => pool,
+            PoolResult::Err(ref _e) => return assert!(false),
+        };
+
+        let conn = match pool.acquire_connection(None, None, None) {
+            Ok(conn) => conn,
+            Err(_e) => return assert!(false),
+        };
+
+        match conn.get_server_version() {
+            Ok(version_info) => {
+                assert!(version_info.version() == "12.1.0.2.0");
+                assert!(version_info.version_num() == 1201000200);
+                assert!(version_info.release() ==
+                        "Oracle Database 12c Standard Edition Release 12.1.0.2.0 - \
+                        64bit Production");
+            }
+            Err(e) => ::test::error_info(e),
+        }
+    }
+
+    #[test]
+    fn add_ref_release() {
+        let pool = match *POOL {
+            PoolResult::Ok(ref pool) => pool,
+            PoolResult::Err(ref _e) => return assert!(false),
+        };
+
+        match pool.add_ref() {
+            Ok(_) => {
+                match pool.release() {
+                    Ok(_) => assert!(true),
+                    Err(_) => assert!(false),
+                }
+            }
+            Err(_) => assert!(false),
         }
     }
 }

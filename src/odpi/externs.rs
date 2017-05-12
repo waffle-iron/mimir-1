@@ -264,6 +264,10 @@ extern "C" {
                                      createParams: *mut structs::ODPIConnCreateParams,
                                      conn: *mut *mut opaque::ODPIConn)
                                      -> ::std::os::raw::c_int;
+    pub fn dpiPool_addRef(pool: *mut opaque::ODPIPool) -> ::std::os::raw::c_int;
+    pub fn dpiPool_close(pool: *mut opaque::ODPIPool,
+                         closeMode: flags::ODPIPoolCloseMode)
+                         -> ::std::os::raw::c_int;
     pub fn dpiPool_create(context: *const opaque::ODPIContext,
                           userName: *const ::std::os::raw::c_char,
                           userNameLength: u32,
@@ -275,6 +279,7 @@ extern "C" {
                           createParams: *mut structs::ODPIPoolCreateParams,
                           pool: *mut *mut opaque::ODPIPool)
                           -> ::std::os::raw::c_int;
+    pub fn dpiPool_release(pool: *mut opaque::ODPIPool) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn dpiStmt_addRef(stmt: *mut opaque::ODPIStmt) -> ::std::os::raw::c_int;

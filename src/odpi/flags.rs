@@ -360,6 +360,19 @@ bitflags! {
 
 bitflags! {
     #[repr(C)]
+    /// This enumeration identifies the mode to use when closing pools.
+    pub flags ODPIPoolCloseMode: u32 {
+        /// Default value used when closing pools. If there are any active sessions in the pool an
+        /// error will be raised.
+        const DPI_MODE_POOL_CLOSE_DEFAULT = 0b00000000,
+        /// Causes all of the active connections in the pool to be closed before closing the pool
+        /// itself.
+        const DPI_MODE_POOL_CLOSE_FORCE =   0b00000001,
+    }
+}
+
+bitflags! {
+    #[repr(C)]
     /// This enumeration identifies the purity of the sessions that are acquired when using
     /// connection classes during connection creation.
     pub flags ODPIPurity: u32 {
