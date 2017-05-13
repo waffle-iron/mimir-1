@@ -665,6 +665,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn execute_many() {
         let conn = match *CONN {
             ConnResult::Ok(ref conn) => conn,

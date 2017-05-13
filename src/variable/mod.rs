@@ -153,11 +153,11 @@ mod test {
         ccp.set_nchar_encoding(enc_cstr.as_ptr());
 
         let conn = Connection::create(&ctxt,
-                                       Some(&CREDS[0]),
-                                       Some(&CREDS[1]),
-                                       Some("//oic.cbsnae86d3iv.us-east-2.rds.amazonaws.com/ORCL",),
-                                       Some(ccp),
-                                       None)?;
+                                      Some(&CREDS[0]),
+                                      Some(&CREDS[1]),
+                                      Some("//oic.cbsnae86d3iv.us-east-2.rds.amazonaws.com/ORCL"),
+                                      Some(ccp),
+                                      None)?;
 
         conn.add_ref()?;
 
