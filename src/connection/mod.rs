@@ -491,7 +491,7 @@ impl Connection {
                                          object_type,
                                          &mut var_ptr,
                                          &mut data_ptr),
-                 Ok(unsafe { Var::new(var_ptr, data_ptr, max_array_size) }),
+                 Ok(var_ptr.into()),
                  ErrorKind::Connection("dpiConn_newVar".to_string()))
     }
 
@@ -1116,7 +1116,7 @@ mod test {
                     assert!(false);
                 }
 
-                if let Ok(ne) = var.get_num_elements() {
+                if let Ok(ne) = var.get_num_elements_in_array() {
                     assert!(ne == 5);
                 } else {
                     assert!(false);

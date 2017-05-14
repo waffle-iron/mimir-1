@@ -219,20 +219,12 @@ extern "C" {
                                    -> ::std::os::raw::c_int;
 }
 
-#[allow(dead_code)]
 extern "C" {
-    pub fn dpiData_getBytes(data: *mut structs::ODPIData) -> *mut structs::ODPIBytes;
-    pub fn dpiData_getDouble(data: *mut structs::ODPIData) -> f64;
-    pub fn dpiData_setBytes(data: *mut structs::ODPIData,
-                            ptr: *mut ::std::os::raw::c_char,
-                            length: u32);
-    pub fn dpiData_setInt64(data: *mut structs::ODPIData, value: i64);
-}
-
-extern "C" {
+    pub fn dpiDeqOptions_addRef(options: *mut opaque::ODPIDeqOptions) -> ::std::os::raw::c_int;
     pub fn dpiDeqOptions_getMode(options: *mut opaque::ODPIDeqOptions,
                                  value: *mut flags::ODPIDeqMode)
                                  -> ::std::os::raw::c_int;
+    pub fn dpiDeqOptions_release(options: *mut opaque::ODPIDeqOptions) -> ::std::os::raw::c_int;
 }
 
 extern "C" {
@@ -428,4 +420,23 @@ extern "C" {
                                value: *const ::std::os::raw::c_char,
                                valueLength: u32)
                                -> ::std::os::raw::c_int;
+    pub fn dpiVar_setFromLob(var: *mut opaque::ODPIVar,
+                             pos: u32,
+                             lob: *mut opaque::ODPILob)
+                             -> ::std::os::raw::c_int;
+    pub fn dpiVar_setFromObject(var: *mut opaque::ODPIVar,
+                                pos: u32,
+                                obj: *mut opaque::ODPIObject)
+                                -> ::std::os::raw::c_int;
+    pub fn dpiVar_setFromRowid(var: *mut opaque::ODPIVar,
+                               pos: u32,
+                               rowid: *mut opaque::ODPIRowid)
+                               -> ::std::os::raw::c_int;
+    pub fn dpiVar_setFromStmt(var: *mut opaque::ODPIVar,
+                              pos: u32,
+                              stmt: *mut opaque::ODPIStmt)
+                              -> ::std::os::raw::c_int;
+    pub fn dpiVar_setNumElementsInArray(var: *mut opaque::ODPIVar,
+                                        numElements: u32)
+                                        -> ::std::os::raw::c_int;
 }

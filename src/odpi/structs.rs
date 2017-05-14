@@ -10,6 +10,7 @@
 use odpi::{externs, flags, opaque};
 use std::os::raw::{c_char, c_int, c_void};
 use std::ptr;
+use util::ODPIStr;
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
@@ -54,6 +55,13 @@ pub struct ODPIBytes {
     /// Specifies the encoding for character data. This value is populated when data is transferred
     /// from the database. It is ignored when data is being transferred to the database.
     pub encoding: *const ::std::os::raw::c_char,
+}
+
+impl From<ODPIBytes> for String {
+    fn from(odpi_bytes: ODPIBytes) -> String {
+        let res_s = ODPIStr::new(odpi_bytes.ptr, odpi_bytes.length);
+        res_s.into()
+    }
 }
 
 #[repr(C)]

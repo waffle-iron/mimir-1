@@ -348,11 +348,11 @@ mod test {
 
         assert_eq!(id_type, Double);
         let id_data: Data = id_ptr.into();
-        assert_eq!(id_data.get_double(), 1.0);
+        assert_eq!(id_data.as_double(), 1.0);
 
         assert_eq!(username_type, Bytes);
         let username_data: Data = username_ptr.into();
-        assert_eq!(username_data.get_bytes(), "jozias");
+        assert_eq!(username_data.as_string(), "jozias");
 
         let busy_count = pool.get_busy_count()?;
         assert_eq!(busy_count, 1);

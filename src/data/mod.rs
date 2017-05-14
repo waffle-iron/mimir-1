@@ -12,7 +12,7 @@
 //! (such as Go) do not have the ability to manipulate structures containing unions or the ability
 //! to process macros. For this reason, none of these functions perform any error checking. They are
 //! assumed to be replacements for direct manipulation of the various members of the structure.
-use odpi::externs;
+use chrono::{DateTime, Duration, TimeZone, UTC};
 use odpi::structs::{ODPIData, ODPIDataValueUnion};
 use util::ODPIStr;
 
@@ -28,53 +28,73 @@ impl Data {
     #[doc(hidden)]
     pub fn new(is_null: bool, val: ODPIDataValueUnion) -> Data {
         let mut odpi_data = ODPIData {
-            is_null: if is_null { 0 } else { 1 },
+            is_null: if is_null { 1 } else { 0 },
             value: val,
         };
         Data { data: &mut odpi_data as *mut ODPIData }
     }
 
     /// Get the `data` value.
+    #[doc(hidden)]
     pub fn data(&self) -> *mut ODPIData {
         self.data
     }
 
-    /// Returns a pointer to the value of the data when the native type is DPI_NATIVE_TYPE_BYTES.
-    pub fn get_bytes(&self) -> String {
+    /// Get the value as a boolean when the native type is DPI_NATIVE_TYPE_BOOLEAN.
+    pub fn as_boolean(&self) -> bool {
+        unsafe { (*self.data).value.as_boolean == 1 }
+    }
+
+    /// Get the value as an `i64` when the native type is DPI_NATIVE_TYPE_INT64.
+    pub fn as_int64(&self) -> i64 {
+        unsafe { (*self.data).value.as_int_64 }
+    }
+
+    /// Get the value as a `u64` when the native type is DPI_NATIVE_TYPE_UINT64.
+    pub fn as_uint64(&self) -> u64 {
+        unsafe { (*self.data).value.as_uint_64 }
+    }
+
+    /// Get the value as a `f32` when the native type is DPI_NATIVE_TYPE_FLOAT.
+    pub fn as_float(&self) -> f32 {
+        unsafe { (*self.data).value.as_float }
+    }
+
+    /// Get the value as a `f64` when the native type is DPI_NATIVE_TYPE_DOUBLE.
+    pub fn as_double(&self) -> f64 {
+        unsafe { (*self.data).value.as_double }
+    }
+
+    /// Get the value as a `String` when the native type is DPI_NATIVE_TYPE_BYTES.
+    pub fn as_string(&self) -> String {
         unsafe {
-            let odpi_bytes_ptr = externs::dpiData_getBytes(self.data);
-            let res_s = ODPIStr::new((*odpi_bytes_ptr).ptr, (*odpi_bytes_ptr).length);
-            res_s.into()
+            let odpi_bytes = (*self.data).value.as_bytes;
+            let odpi_s = ODPIStr::new(odpi_bytes.ptr, odpi_bytes.length);
+            odpi_s.into()
         }
     }
 
-    /// Returns the value of the data when the native type is DPI_NATIVE_TYPE_DOUBLE.
-    pub fn get_double(&self) -> f64 {
-        unsafe { externs::dpiData_getDouble(self.data) }
+    /// Get the value as a `UTC` when the native type is DPI_NATIVE_TYPE_TIMESTAMP.
+    pub fn as_utc(&self) -> DateTime<UTC> {
+        let odpi_ts = unsafe { (*self.data).value.as_timestamp };
+        let y = odpi_ts.year as i32;
+        let m = odpi_ts.month as u32;
+        let d = odpi_ts.day as u32;
+        let h = odpi_ts.hour as u32;
+        let mi = odpi_ts.minute as u32;
+        let s = odpi_ts.second as u32;
+        UTC.ymd(y, m, d).and_hms_nano(h, mi, s, odpi_ts.fsecond)
     }
 
-    /// Sets the value of the data when the native type is DPI_NATIVE_TYPE_BYTES.
-    pub fn set_bytes(&self, s: &str) {
-        let odpi_s = ODPIStr::from(s);
-        unsafe {
-            externs::dpiData_setBytes(self.data,
-                                      odpi_s.ptr() as *mut ::std::os::raw::c_char,
-                                      odpi_s.len())
-        }
-    }
-
-    /// Sets the value of the data when the native type is DPI_NATIVE_TYPE_INT64.
-    pub fn set_int64(&self, i: i64) {
-        unsafe { externs::dpiData_setInt64(self.data, i) }
-    }
-
-    /// Set the is_null value of the data.
-    pub fn set_is_null(&mut self, is_null: bool) -> &mut Data {
-        unsafe {
-            let mut data_deref = *self.data;
-            data_deref.is_null = if is_null { 1 } else { 0 };
-        }
-        self
+    /// Get the value as a `Duration` when the native type is DPI_NATIVE_TYPE_INTERVAL_DS.
+    pub fn as_duration(&self) -> Duration {
+        let odpi_int_ds = unsafe { (*self.data).value.as_interval_ds };
+        let mut dur = Duration::days(odpi_int_ds.days as i64);
+        dur = dur + Duration::hours(odpi_int_ds.hours as i64);
+        dur = dur + Duration::minutes(odpi_int_ds.minutes as i64);
+        dur = dur + Duration::seconds(odpi_int_ds.seconds as i64);
+        dur = dur + Duration::nanoseconds(odpi_int_ds.fseconds as i64);
+        dur
     }
 }
 

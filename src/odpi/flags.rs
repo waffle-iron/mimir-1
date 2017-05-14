@@ -27,7 +27,6 @@ bitflags! {
 
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-#[allow(dead_code)]
 /// This enumeration identifies the mode to use when closing connections to the database.
 pub enum ODPIConnCloseMode {
     /// Default value used when closing connections.

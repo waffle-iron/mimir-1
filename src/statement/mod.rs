@@ -28,21 +28,27 @@ use variable::Var;
 /// available by handle to a calling application or driver.
 pub struct Statement {
     /// The ODPI-C statement
-    stmt: *mut ODPIStmt,
+    inner: *mut ODPIStmt,
 }
 
 impl Statement {
     /// Create a new statement from an `ODPIStmt` pointer
     #[doc(hidden)]
-    pub fn new(stmt: *mut ODPIStmt) -> Statement {
-        Statement { stmt: stmt }
+    pub fn new(inner: *mut ODPIStmt) -> Statement {
+        Statement { inner: inner }
+    }
+
+    /// Get the `inner` value.
+    #[doc(hidden)]
+    pub fn inner(&self) -> *mut ODPIStmt {
+        self.inner
     }
 
     /// Adds a reference to the statement. This is intended for situations where a reference to the
     /// statement needs to be maintained independently of the reference returned when the statement
     /// was created.
     pub fn add_ref(&self) -> Result<()> {
-        try_dpi!(externs::dpiStmt_addRef(self.stmt),
+        try_dpi!(externs::dpiStmt_addRef(self.inner),
                  Ok(()),
                  ErrorKind::Statement("dpiStmt_addRef".to_string()))
     }
@@ -58,7 +64,7 @@ impl Statement {
         let name_s = ODPIStr::from(name);
 
         /// TODO: Test this when Var is complete.
-        try_dpi!(externs::dpiStmt_bindByName(self.stmt, name_s.ptr(), name_s.len(), var.inner()),
+        try_dpi!(externs::dpiStmt_bindByName(self.inner, name_s.ptr(), name_s.len(), var.inner()),
                  Ok(()),
                  ErrorKind::Statement("dpiStmt_bindByName".to_string()))
     }
@@ -71,8 +77,8 @@ impl Statement {
     /// its location in the statement. Placeholders are numbered from left to right, starting from
     /// 1, and duplicate names do not count as additional placeholders.
     /// * `var` - a variable which is to be bound.
-    pub fn bind_by_pos(&self, pos: u32, var: Var) -> Result<()> {
-        try_dpi!(externs::dpiStmt_bindByPos(self.stmt, pos, var.inner()),
+    pub fn bind_by_pos(&self, pos: u32, var: &Var) -> Result<()> {
+        try_dpi!(externs::dpiStmt_bindByPos(self.inner, pos, var.inner()),
                  Ok(()),
                  ErrorKind::Statement("dpiStmt_bindByPos".to_string()))
     }
@@ -95,7 +101,7 @@ impl Statement {
                               -> Result<()> {
         let name_s = ODPIStr::from(name);
 
-        try_dpi!(externs::dpiStmt_bindValueByName(self.stmt,
+        try_dpi!(externs::dpiStmt_bindValueByName(self.inner,
                                                   name_s.ptr(),
                                                   name_s.len(),
                                                   native_type,
@@ -121,7 +127,7 @@ impl Statement {
                              native_type: ODPINativeTypeNum,
                              data: Data)
                              -> Result<()> {
-        try_dpi!(externs::dpiStmt_bindValueByPos(self.stmt, pos, native_type, data.data()),
+        try_dpi!(externs::dpiStmt_bindValueByPos(self.inner, pos, native_type, data.data()),
                  Ok(()),
                  ErrorKind::Statement("dpiStmt_bindValueByPos".to_string()))
     }
@@ -135,7 +141,7 @@ impl Statement {
     /// results.
     pub fn close(&self, tag: Option<&str>) -> Result<()> {
         let tag_s = ODPIStr::from(tag);
-        try_dpi!(externs::dpiStmt_close(self.stmt, tag_s.ptr(), tag_s.len()),
+        try_dpi!(externs::dpiStmt_close(self.inner, tag_s.ptr(), tag_s.len()),
                  Ok(()),
                  ErrorKind::Statement("dpiStmt_close".to_string()))
     }
@@ -155,7 +161,7 @@ impl Statement {
     /// * `mode` - one or more of the values from the enumeration `ODPIExecMode`, OR'ed together.
     pub fn execute(&self, mode: ODPIExecMode) -> Result<u32> {
         let mut cols_queried = 0;
-        try_dpi!(externs::dpiStmt_execute(self.stmt, mode, &mut cols_queried),
+        try_dpi!(externs::dpiStmt_execute(self.inner, mode, &mut cols_queried),
                  Ok(cols_queried),
                  ErrorKind::Statement("dpiStmt_execute".to_string()))
     }
@@ -167,7 +173,7 @@ impl Statement {
     /// * `num_iters` - the number of times the statement is executed. Each iteration corresponds to
     /// one of the elements of the array that was bound earlier.
     pub fn execute_many(&self, mode: ODPIExecMode, num_iters: u32) -> Result<()> {
-        try_dpi!(externs::dpiStmt_executeMany(self.stmt, mode, num_iters),
+        try_dpi!(externs::dpiStmt_executeMany(self.inner, mode, num_iters),
                  Ok(()),
                  ErrorKind::Statement("dpiStmt_executeMany".to_string()))
     }
@@ -179,7 +185,7 @@ impl Statement {
         let mut found = 0;
         let mut buffer_row_index = 0;
 
-        try_dpi!(externs::dpiStmt_fetch(self.stmt, &mut found, &mut buffer_row_index),
+        try_dpi!(externs::dpiStmt_fetch(self.inner, &mut found, &mut buffer_row_index),
                  Ok((found == 1, buffer_row_index)),
                  ErrorKind::Statement("dpiStmt_fetch".to_string()))
     }
@@ -199,7 +205,7 @@ impl Statement {
         let mut num_rows_fetched = 0;
         let mut more_rows = 0;
 
-        try_dpi!(externs::dpiStmt_fetchRows(self.stmt,
+        try_dpi!(externs::dpiStmt_fetchRows(self.inner,
                                             max_rows,
                                             &mut buffer_row_index,
                                             &mut num_rows_fetched,
@@ -213,7 +219,7 @@ impl Statement {
     pub fn get_batch_error_count(&self) -> Result<u32> {
         let mut count = 0;
 
-        try_dpi!(externs::dpiStmt_getBatchErrorCount(self.stmt, &mut count),
+        try_dpi!(externs::dpiStmt_getBatchErrorCount(self.inner, &mut count),
                  Ok(count),
                  ErrorKind::Statement("dpiStmt_getBatchErrorCount".to_string()))
     }
@@ -226,7 +232,7 @@ impl Statement {
     pub fn get_batch_errors(&self, num_errors: u32) -> Result<Vec<error::Info>> {
         let err_ptr = ptr::null_mut();
 
-        try_dpi!(externs::dpiStmt_getBatchErrors(self.stmt, num_errors, err_ptr),
+        try_dpi!(externs::dpiStmt_getBatchErrors(self.inner, num_errors, err_ptr),
                  {
                      let err_slice = unsafe { slice::from_raw_parts(err_ptr, num_errors as usize) };
                      let odpi_vec = Vec::from(err_slice);
@@ -239,7 +245,7 @@ impl Statement {
     /// Returns the number of unique bind variables in the prepared statement.
     pub fn get_bind_count(&self) -> Result<u32> {
         let mut count = 0;
-        try_dpi!(externs::dpiStmt_getBindCount(self.stmt, &mut count),
+        try_dpi!(externs::dpiStmt_getBindCount(self.inner, &mut count),
                  Ok(count),
                  ErrorKind::Statement("dpiStmt_getBindCount".to_string()))
     }
@@ -254,7 +260,7 @@ impl Statement {
             names_len_vec.push(0);
         }
 
-        try_dpi!(externs::dpiStmt_getBindNames(self.stmt,
+        try_dpi!(externs::dpiStmt_getBindNames(self.inner,
                                                num_bind_names,
                                                names_vec.as_mut_ptr(),
                                                names_len_vec.as_mut_ptr()),
@@ -277,7 +283,7 @@ impl Statement {
     pub fn get_fetch_array_size(&self) -> Result<u32> {
         let mut size = 0;
 
-        try_dpi!(externs::dpiStmt_getFetchArraySize(self.stmt, &mut size),
+        try_dpi!(externs::dpiStmt_getFetchArraySize(self.inner, &mut size),
                  Ok(size),
                  ErrorKind::Statement("dpiStmt_getFetchArraySize".to_string()))
     }
@@ -292,7 +298,7 @@ impl Statement {
     pub fn get_info(&self) -> Result<self::Info> {
         let mut info: ODPIStmtInfo = Default::default();
 
-        try_dpi!(externs::dpiStmt_getInfo(self.stmt, &mut info),
+        try_dpi!(externs::dpiStmt_getInfo(self.inner, &mut info),
                  Ok(Info::new(info)),
                  ErrorKind::Statement("dpiStmt_getInfo".to_string()))
     }
@@ -301,7 +307,7 @@ impl Statement {
     pub fn get_num_query_columns(&self) -> Result<u32> {
         let mut cols = 0;
 
-        try_dpi!(externs::dpiStmt_getNumQueryColumns(self.stmt, &mut cols),
+        try_dpi!(externs::dpiStmt_getNumQueryColumns(self.inner, &mut cols),
                  Ok(cols),
                  ErrorKind::Statement("dpiStmt_getNumQueryColumns".to_string()))
     }
@@ -310,7 +316,7 @@ impl Statement {
     pub fn get_query_info(&self, pos: u32) -> Result<query::Info> {
         let mut qi: ODPIQueryInfo = Default::default();
 
-        try_dpi!(externs::dpiStmt_getQueryInfo(self.stmt, pos, &mut qi),
+        try_dpi!(externs::dpiStmt_getQueryInfo(self.inner, pos, &mut qi),
                  Ok(query::Info::new(qi)),
                  ErrorKind::Statement("dpiStmt_getQueryInfo".to_string()))
     }
@@ -321,7 +327,7 @@ impl Statement {
         let mut data = ptr::null_mut();
         let mut native_type = 0;
 
-        try_dpi!(externs::dpiStmt_getQueryValue(self.stmt, pos, &mut native_type, &mut data),
+        try_dpi!(externs::dpiStmt_getQueryValue(self.inner, pos, &mut native_type, &mut data),
                  Ok((native_type.into(), data)),
                  ErrorKind::Statement("dpiStmt_getQueryValue".to_string()))
     }
@@ -331,7 +337,7 @@ impl Statement {
     pub fn get_row_count(&self) -> Result<u64> {
         let mut count = 0;
 
-        try_dpi!(externs::dpiStmt_getRowCount(self.stmt, &mut count),
+        try_dpi!(externs::dpiStmt_getRowCount(self.inner, &mut count),
                  Ok(count),
                  ErrorKind::Statement("dpiStmt_getRowCount".to_string()))
     }
@@ -354,7 +360,7 @@ impl Statement {
     /// freed and the statement is closed if that has not already taken place using the function
     /// `close()`.
     pub fn release(&self) -> Result<()> {
-        try_dpi!(externs::dpiStmt_release(self.stmt),
+        try_dpi!(externs::dpiStmt_release(self.inner),
                  Ok(()),
                  ErrorKind::Statement("dpiStmt_release".to_string()))
     }
@@ -366,7 +372,7 @@ impl Statement {
     /// the cursor.
     /// * `row_count_offset` -
     pub fn scroll(&self, mode: ODPIFetchMode, offset: i32, row_count_offset: i32) -> Result<()> {
-        try_dpi!(externs::dpiStmt_scroll(self.stmt, mode, offset, row_count_offset),
+        try_dpi!(externs::dpiStmt_scroll(self.inner, mode, offset, row_count_offset),
                  Ok(()),
                  ErrorKind::Statement("dpiStmt_scroll".to_string()))
     }
@@ -433,7 +439,6 @@ impl Info {
 
 #[cfg(test)]
 mod test {
-    use test::{ContextResult, CREDS, CTXT, ENC};
     use connection::Connection;
     use data::Data;
     use error;
@@ -442,7 +447,9 @@ mod test {
     use odpi::flags::ODPINativeTypeNum::*;
     use odpi::flags::ODPIOracleTypeNum::*;
     use odpi::flags::ODPIStatementType::*;
-    use odpi::structs::{ODPIBytes, ODPIData, ODPIDataValueUnion};
+    use odpi::structs::{ODPIBytes, ODPIDataValueUnion};
+    use rand::{self, Rng};
+    use test::{ContextResult, CREDS, CTXT, ENC};
     use util::ODPIStr;
 
     enum ConnResult {
@@ -534,7 +541,7 @@ mod test {
             ConnResult::Err(ref _e) => return assert!(false),
         };
         match conn.new_var(Varchar, Bytes, 1, 256, false, false) {
-            Ok(var) => {
+            Ok(ref var) => {
                 match conn.prepare_stmt(Some("select * from username where username = :username"),
                                         None,
                                         false) {
@@ -665,8 +672,9 @@ mod test {
     }
 
     #[test]
-    #[ignore]
+    // #[ignore]
     fn execute_many() {
+        let mut rng = rand::thread_rng();
         let conn = match *CONN {
             ConnResult::Ok(ref conn) => conn,
             ConnResult::Err(ref _e) => return assert!(false),
@@ -683,18 +691,20 @@ mod test {
             Err(e) => return ::test::error_info(e),
         };
 
+
         let mut id_data = match id_var.get_data() {
             Ok(data) => data,
             Err(e) => return ::test::error_info(e),
         };
 
-        for (idx, data) in id_data.iter_mut().enumerate() {
-            let mut d: Data = (data as *mut ODPIData).into();
-            d.set_is_null(false);
-            d.set_int64(idx as i64);
+        for data in id_data.iter_mut() {
+            unsafe {
+                (*data).is_null = 0;
+                (*data).value.as_int_64 = rng.gen::<i64>().abs();
+            }
         }
 
-        match stmt.bind_by_pos(1, id_var) {
+        match stmt.bind_by_pos(1, &id_var) {
             Ok(_) => assert!(true),
             Err(e) => ::test::error_info(e),
         }
@@ -711,7 +721,7 @@ mod test {
             }
         }
 
-        match stmt.bind_by_pos(2, username_var) {
+        match stmt.bind_by_pos(2, &username_var) {
             Ok(_) => assert!(true),
             Err(e) => ::test::error_info(e),
         }
@@ -767,7 +777,7 @@ mod test {
                             Ok((buffer_row_index, num_rows_fetched, more_rows)) => {
                                 assert!(!more_rows);
                                 assert!(buffer_row_index == 0);
-                                assert!(num_rows_fetched == 2);
+                                assert!(num_rows_fetched == 4);
                             }
                             Err(_e) => assert!(false),
                         }
@@ -949,7 +959,8 @@ mod test {
             ConnResult::Ok(ref conn) => conn,
             ConnResult::Err(ref _e) => return assert!(false),
         };
-        match conn.prepare_stmt(Some("select * from username where username = 'jozias'"),
+        match conn.prepare_stmt(Some("select * from username where username = 'jozias' order by \
+                                      id"),
                                 None,
                                 false) {
             Ok(stmt) => {
@@ -964,7 +975,7 @@ mod test {
                             Ok((t, ptr)) => {
                                 assert_eq!(t, Double);
                                 let data: Data = ptr.into();
-                                assert_eq!(data.get_double(), 1.0);
+                                assert_eq!(data.as_double(), 1.0);
                             }
                             Err(_e) => assert!(false),
                         }
@@ -972,7 +983,7 @@ mod test {
                             Ok((t, ptr)) => {
                                 assert_eq!(t, Bytes);
                                 let data: Data = ptr.into();
-                                assert_eq!(data.get_bytes(), "jozias");
+                                assert_eq!(data.as_string(), "jozias");
                             }
                             Err(_e) => assert!(false),
                         }
@@ -1004,7 +1015,7 @@ mod test {
                     Err(e) => return ::test::error_info(e),
                 }
                 match stmt.get_row_count() {
-                    Ok(rc) => assert_eq!(rc, 2),
+                    Ok(rc) => assert_eq!(rc, 4),
                     Err(e) => return ::test::error_info(e),
                 }
             }

@@ -6,7 +6,7 @@
 // option. All files in the project carrying such notice may not be copied,
 // modified, or distributed except according to those terms.
 
-//! [NOT IMPL]
+//! [Needs Complete Testing]
 //! Variable handles are used to represent memory areas used for transferring data to and from the
 //! database. They are created by calling the function `Connection::newVar()`. They are destroyed
 //! when the last reference to the variable is released by calling the function `release()`. They
@@ -14,9 +14,13 @@
 //! `Statement::bindByPos()`. They can also be used for fetching data from the database by calling
 //! the function `Statement::define()`.
 use error::{ErrorKind, Result};
+use lob::Lob;
+use object::Object;
 use odpi::externs;
 use odpi::opaque::ODPIVar;
 use odpi::structs::ODPIData;
+use rowid::Rowid;
+use statement::Statement;
 use std::{ptr, slice};
 use util::ODPIStr;
 
@@ -25,22 +29,9 @@ use util::ODPIStr;
 pub struct Var {
     /// The ODPI-C var
     inner: *mut ODPIVar,
-    /// The ODPI-C dpiData array associated with this variable.
-    #[allow(dead_code)]
-    data_arr: *mut [ODPIData],
 }
 
 impl Var {
-    /// Create a new `Var` struct from the given parts.
-    #[doc(hidden)]
-    pub unsafe fn new(var: *mut ODPIVar, data_arr_ptr: *mut ODPIData, size: u32) -> Var {
-        let da = slice::from_raw_parts_mut(data_arr_ptr, size as usize);
-        Var {
-            inner: var,
-            data_arr: da,
-        }
-    }
-
     /// Get the `inner` value.
     #[doc(hidden)]
     pub fn inner(&self) -> *mut ODPIVar {
@@ -76,23 +67,29 @@ impl Var {
     /// available when the variable is first created using the function `Connection::new_var()`. If
     /// a DML returning statement is executed, however, the number of allocated elements can change
     /// in addition to the memory location.
-    pub fn get_data(&self) -> Result<Vec<ODPIData>> {
+    pub fn get_data(&self) -> Result<&mut [ODPIData]> {
         let mut num_elements = 0;
         let mut data_arr_ptr = ptr::null_mut();
 
         try_dpi!(externs::dpiVar_getData(self.inner, &mut num_elements, &mut data_arr_ptr),
-                 Ok(Vec::from(unsafe {
-                                  slice::from_raw_parts(data_arr_ptr, num_elements as usize)
-                              })),
+                 {
+                     if data_arr_ptr.is_null() || num_elements == 0 {
+                         Ok(&mut [])
+                     } else {
+                         Ok(unsafe {
+                                slice::from_raw_parts_mut(data_arr_ptr, num_elements as usize)
+                            })
+                     }
+                 },
                  ErrorKind::Var("dpiVar_getData".to_string()))
     }
 
     /// Returns the number of elements in a PL/SQL index-by table if the variable was created as an
-    /// array by the function `dpiConn_newVar()`. If the variable is one of the output bind
+    /// array by the function `Connection::newVar()`. If the variable is one of the output bind
     /// variables of a DML returning statement, however, the value returned will correspond to the
     /// number of rows returned by the DML returning statement. In all other cases, the value
     /// returned will be the number of elements the variable was created with.
-    pub fn get_num_elements(&self) -> Result<u32> {
+    pub fn get_num_elements_in_array(&self) -> Result<u32> {
         let mut num_elements = 0;
         try_dpi!(externs::dpiVar_getNumElementsInArray(self.inner, &mut num_elements),
                  Ok(num_elements),
@@ -131,18 +128,80 @@ impl Var {
                  Ok(()),
                  ErrorKind::Var("dpiVar_setFromBytes".to_string()))
     }
+
+    /// Sets the variable value to the specified LOB.
+    ///
+    /// * `pos` - the array position in the variable which is to be set. The first position is 0. If
+    /// the position exceeds the number of elements allocated by the variable an error is returned.
+    /// * `lob` - the LOB which should be set.
+    pub fn set_from_lob(&self, pos: u32, lob: Lob) -> Result<()> {
+        try_dpi!(externs::dpiVar_setFromLob(self.inner, pos, lob.inner()),
+                 Ok(()),
+                 ErrorKind::Var("dpiVar_setFromLob".to_string()))
+    }
+
+    /// Sets the variable value to the specified object.
+    ///
+    /// * `pos` - the array position in the variable which is to be set. The first position is 0. If
+    /// the position exceeds the number of elements allocated by the variable an error is returned.
+    /// * `obj` - the object which should be set.
+    pub fn set_from_object(&self, pos: u32, obj: Object) -> Result<()> {
+        try_dpi!(externs::dpiVar_setFromObject(self.inner, pos, obj.inner()),
+                 Ok(()),
+                 ErrorKind::Var("dpiVar_setFromObject".to_string()))
+    }
+
+    /// Sets the variable value to the specified rowid.
+    ///
+    /// * `pos` - the array position in the variable which is to be set. The first position is 0. If
+    /// the position exceeds the number of elements allocated by the variable an error is returned.
+    /// * `rowid` - the rowid which should be set.
+    pub fn set_from_rowid(&self, pos: u32, rowid: Rowid) -> Result<()> {
+        try_dpi!(externs::dpiVar_setFromRowid(self.inner, pos, rowid.inner()),
+                 Ok(()),
+                 ErrorKind::Var("dpiVar_setFromRowid".to_string()))
+    }
+
+    /// Sets the variable value to the specified statement.
+    ///
+    /// * `pos` - the array position in the variable which is to be set. The first position is 0. If
+    /// the position exceeds the number of elements allocated by the variable an error is returned.
+    /// * `stmt` - the statement which should be set.
+    pub fn set_from_stmt(&self, pos: u32, stmt: Statement) -> Result<()> {
+        try_dpi!(externs::dpiVar_setFromStmt(self.inner, pos, stmt.inner()),
+                 Ok(()),
+                 ErrorKind::Var("dpiVar_setFromStmt".to_string()))
+    }
+
+    /// Sets the number of elements in a PL/SQL index-by table.
+    ///
+    /// * `num_elements` - he number of elements that PL/SQL should consider part of the array. This
+    /// number should not exceed the number of elements that have been allocated in the variable.
+    pub fn set_num_elements_in_array(&self, num_elements: u32) -> Result<()> {
+        try_dpi!(externs::dpiVar_setNumElementsInArray(self.inner, num_elements),
+                 Ok(()),
+                 ErrorKind::Var("dpiVar_setNumElementsInArray".to_string()))
+    }
+}
+
+impl From<*mut ODPIVar> for Var {
+    fn from(inner: *mut ODPIVar) -> Var {
+        Var { inner: inner }
+    }
 }
 
 #[cfg(test)]
 mod test {
-    use test::CREDS;
+    use data::Data;
     use connection::Connection;
     use context::Context;
     use error::Result;
     use odpi::flags::ODPIConnCloseMode::*;
     use odpi::flags::ODPINativeTypeNum::*;
     use odpi::flags::ODPIOracleTypeNum::*;
+    use odpi::structs::ODPIData;
     use std::ffi::CString;
+    use test::CREDS;
 
     fn var_res() -> Result<()> {
         let ctxt = Context::create()?;
@@ -161,7 +220,24 @@ mod test {
 
         conn.add_ref()?;
 
-        let _var = conn.new_var(Number, Int64, 2, 0, false, false)?;
+        let var = conn.new_var(Number, Int64, 2, 0, false, false)?;
+        let num_elements = var.get_num_elements_in_array()?;
+        assert_eq!(num_elements, 2);
+        let size_in_bytes = var.get_size_in_bytes()?;
+        assert_eq!(size_in_bytes, 22);
+
+        let str_test = conn.new_var(Varchar, Bytes, 2, 256, false, false)?;
+        str_test.set_from_bytes(0, "jozias")?;
+        let mut str_test_data = str_test.get_data()?;
+        assert_eq!(str_test_data.len(), 2);
+        for (idx, d) in str_test_data.iter_mut().enumerate() {
+            let data: Data = (d as *mut ODPIData).into();
+            match idx {
+                0 => assert_eq!(data.as_string(), "jozias"),
+                1 => assert_eq!(data.as_string(), ""),
+                _ => assert!(false),
+            }
+        }
 
         conn.release()?;
         conn.close(DefaultClose, None)?;
