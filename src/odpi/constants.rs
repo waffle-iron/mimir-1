@@ -17,3 +17,5 @@ pub const DPI_MINOR_VERSION: c_uint = 0;
 pub const DPI_SUCCESS: c_int = 0;
 /// Value returned on failure.
 pub const DPI_FAILURE: c_int = -1;
+/// Used by dequeue set wait.
+pub const DPI_DEQ_WAIT_NO_WAIT: c_int = 0;

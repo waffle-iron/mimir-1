@@ -79,7 +79,11 @@ impl From<String> for ODPIStr {
 
 impl From<ODPIStr> for String {
     fn from(s: ODPIStr) -> String {
-        let vec = unsafe { slice::from_raw_parts(s.ptr as *mut u8, s.len as usize) };
-        String::from_utf8_lossy(vec).into_owned()
+        if s.ptr.is_null() {
+            "".to_string()
+        } else {
+            let vec = unsafe { slice::from_raw_parts(s.ptr as *mut u8, s.len as usize) };
+            String::from_utf8_lossy(vec).into_owned()
+        }
     }
 }

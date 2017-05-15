@@ -74,6 +74,23 @@ pub enum ODPIDeqMode {
 
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+/// This enumeration identifies the method used for determining which message is to be dequeued from
+/// a queue.
+pub enum ODPIDeqNavigation {
+    /// Retrieves the first available message that matches the search criteria. This resets the
+    /// position to the beginning of the queue.
+    FirstMsg = 1,
+    /// Skips the remainder of the current transaction group (if any) and retrieves the first
+    /// message of the next transaction group. This option can only be used if message grouping is
+    /// enabled for the queue.
+    NextTransaction = 2,
+    /// Retrieves the next available message that matches the search criteria. This is the default
+    /// method.
+    NextMsg = 3,
+}
+
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[allow(dead_code)]
 /// This enumeration identifies the types of events that can take place. The event type is part of
 /// the messages that are sent to subscriptions.

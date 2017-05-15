@@ -221,10 +221,71 @@ extern "C" {
 
 extern "C" {
     pub fn dpiDeqOptions_addRef(options: *mut opaque::ODPIDeqOptions) -> ::std::os::raw::c_int;
+    pub fn dpiDeqOptions_getCondition(options: *mut opaque::ODPIDeqOptions,
+                                      value: *mut *const ::std::os::raw::c_char,
+                                      valueLength: *mut u32)
+                                      -> ::std::os::raw::c_int;
+    pub fn dpiDeqOptions_getConsumerName(options: *mut opaque::ODPIDeqOptions,
+                                         value: *mut *const ::std::os::raw::c_char,
+                                         valueLength: *mut u32)
+                                         -> ::std::os::raw::c_int;
+    pub fn dpiDeqOptions_getCorrelation(options: *mut opaque::ODPIDeqOptions,
+                                        value: *mut *const ::std::os::raw::c_char,
+                                        valueLength: *mut u32)
+                                        -> ::std::os::raw::c_int;
     pub fn dpiDeqOptions_getMode(options: *mut opaque::ODPIDeqOptions,
                                  value: *mut flags::ODPIDeqMode)
                                  -> ::std::os::raw::c_int;
+    pub fn dpiDeqOptions_getMsgId(options: *mut opaque::ODPIDeqOptions,
+                                  value: *mut *const ::std::os::raw::c_char,
+                                  valueLength: *mut u32)
+                                  -> ::std::os::raw::c_int;
+    pub fn dpiDeqOptions_getNavigation(options: *mut opaque::ODPIDeqOptions,
+                                       value: *mut flags::ODPIDeqNavigation)
+                                       -> ::std::os::raw::c_int;
+    pub fn dpiDeqOptions_getTransformation(options: *mut opaque::ODPIDeqOptions,
+                                           value: *mut *const ::std::os::raw::c_char,
+                                           valueLength: *mut u32)
+                                           -> ::std::os::raw::c_int;
+    pub fn dpiDeqOptions_getVisibility(options: *mut opaque::ODPIDeqOptions,
+                                       value: *mut flags::ODPIVisibility)
+                                       -> ::std::os::raw::c_int;
+    pub fn dpiDeqOptions_getWait(options: *mut opaque::ODPIDeqOptions,
+                                 value: *mut u32)
+                                 -> ::std::os::raw::c_int;
     pub fn dpiDeqOptions_release(options: *mut opaque::ODPIDeqOptions) -> ::std::os::raw::c_int;
+    pub fn dpiDeqOptions_setCondition(options: *mut opaque::ODPIDeqOptions,
+                                      value: *const ::std::os::raw::c_char,
+                                      valueLength: u32)
+                                      -> ::std::os::raw::c_int;
+    pub fn dpiDeqOptions_setConsumerName(options: *mut opaque::ODPIDeqOptions,
+                                         value: *const ::std::os::raw::c_char,
+                                         valueLength: u32)
+                                         -> ::std::os::raw::c_int;
+    pub fn dpiDeqOptions_setCorrelation(options: *mut opaque::ODPIDeqOptions,
+                                        value: *const ::std::os::raw::c_char,
+                                        valueLength: u32)
+                                        -> ::std::os::raw::c_int;
+    pub fn dpiDeqOptions_setMode(options: *mut opaque::ODPIDeqOptions,
+                                 value: flags::ODPIDeqMode)
+                                 -> ::std::os::raw::c_int;
+    pub fn dpiDeqOptions_setMsgId(options: *mut opaque::ODPIDeqOptions,
+                                  value: *const ::std::os::raw::c_char,
+                                  valueLength: u32)
+                                  -> ::std::os::raw::c_int;
+    pub fn dpiDeqOptions_setNavigation(options: *mut opaque::ODPIDeqOptions,
+                                       value: flags::ODPIDeqNavigation)
+                                       -> ::std::os::raw::c_int;
+    pub fn dpiDeqOptions_setTransformation(options: *mut opaque::ODPIDeqOptions,
+                                           value: *const ::std::os::raw::c_char,
+                                           valueLength: u32)
+                                           -> ::std::os::raw::c_int;
+    pub fn dpiDeqOptions_setVisibility(options: *mut opaque::ODPIDeqOptions,
+                                       value: flags::ODPIVisibility)
+                                       -> ::std::os::raw::c_int;
+    pub fn dpiDeqOptions_setWait(options: *mut opaque::ODPIDeqOptions,
+                                 value: u32)
+                                 -> ::std::os::raw::c_int;
 }
 
 extern "C" {
