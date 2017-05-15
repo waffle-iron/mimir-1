@@ -181,6 +181,8 @@ impl Statement {
     /// Fetches a single row from the statement. If the statement does not refer to a query an error
     /// is returned. All columns that have not been defined prior to this call are implicitly
     /// defined using the metadata made available when the statement was executed.
+    ///
+    /// Returns a tuple of (found, row_index)
     pub fn fetch(&self) -> Result<(bool, u32)> {
         let mut found = 0;
         let mut buffer_row_index = 0;

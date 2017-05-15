@@ -50,6 +50,9 @@ pub mod variable;
 mod odpi;
 mod util;
 
+pub use odpi::{constants, flags};
+pub use odpi::structs::ODPIDataValueUnion as DataUnion;
+
 #[cfg(test)]
 mod test {
     use context;
