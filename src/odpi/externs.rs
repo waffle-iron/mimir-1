@@ -289,13 +289,31 @@ extern "C" {
 }
 
 extern "C" {
+    pub fn dpiEnqOptions_addRef(options: *mut opaque::ODPIEnqOptions) -> ::std::os::raw::c_int;
+    pub fn dpiEnqOptions_getTransformation(options: *mut opaque::ODPIEnqOptions,
+                                           value: *mut *const ::std::os::raw::c_char,
+                                           valueLength: *mut u32)
+                                           -> ::std::os::raw::c_int;
     pub fn dpiEnqOptions_getVisibility(options: *mut opaque::ODPIEnqOptions,
                                        value: *mut flags::ODPIVisibility)
+                                       -> ::std::os::raw::c_int;
+    pub fn dpiEnqOptions_release(options: *mut opaque::ODPIEnqOptions) -> ::std::os::raw::c_int;
+    pub fn dpiEnqOptions_setDeliveryMode(options: *mut opaque::ODPIEnqOptions,
+                                         value: flags::ODPIMessageDeliveryMode)
+                                         -> ::std::os::raw::c_int;
+    pub fn dpiEnqOptions_setTransformation(options: *mut opaque::ODPIEnqOptions,
+                                           value: *const ::std::os::raw::c_char,
+                                           valueLength: u32)
+                                           -> ::std::os::raw::c_int;
+    pub fn dpiEnqOptions_setVisibility(options: *mut opaque::ODPIEnqOptions,
+                                       value: flags::ODPIVisibility)
                                        -> ::std::os::raw::c_int;
 }
 
 extern "C" {
+    pub fn dpiLob_addRef(lob: *mut opaque::ODPILob) -> ::std::os::raw::c_int;
     pub fn dpiLob_getChunkSize(lob: *mut opaque::ODPILob, size: *mut u32) -> ::std::os::raw::c_int;
+    pub fn dpiLob_release(lob: *mut opaque::ODPILob) -> ::std::os::raw::c_int;
 }
 
 extern "C" {
