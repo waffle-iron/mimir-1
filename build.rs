@@ -43,8 +43,8 @@ fn main() {
         }
     };
     if !path::Path::new(&oci_lib_dir)
-            .join(oci_lib_real_name)
-            .exists() {
+           .join(oci_lib_real_name)
+           .exists() {
         println!("{} could not be found in OCI_LIB_DIR: {}",
                  oci_lib_real_name,
                  oci_lib_dir);
