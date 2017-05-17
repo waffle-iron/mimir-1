@@ -108,10 +108,9 @@ extern "C" {
                                    value: *mut *const ::std::os::raw::c_char,
                                    valueLength: *mut u32)
                                    -> ::std::os::raw::c_int;
-    #[allow(dead_code)]
-    pub fn dpiConn_getHandle(conn: *mut opaque::ODPIConn,
-                             handle: *mut *mut ::std::os::raw::c_void)
-                             -> ::std::os::raw::c_int;
+    // pub fn dpiConn_getHandle(conn: *mut opaque::ODPIConn,
+    //                          handle: *mut *mut ::std::os::raw::c_void)
+    //                          -> ::std::os::raw::c_int;
     pub fn dpiConn_getInternalName(conn: *mut opaque::ODPIConn,
                                    value: *mut *const ::std::os::raw::c_char,
                                    valueLength: *mut u32)
