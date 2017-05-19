@@ -18,6 +18,7 @@ macro_rules! try_dpi {
 }
 
 #[doc(hidden)]
+#[allow(unused_macros)]
 macro_rules! try_trace(
     ($l:expr, $($k:expr => $v:expr),+; $($args:tt)+) => {
         if let Some(ref log) = $l {
@@ -32,6 +33,7 @@ macro_rules! try_trace(
 );
 
 #[doc(hidden)]
+#[allow(unused_macros)]
 macro_rules! try_debug(
     ($l:expr, $($k:expr => $v:expr),+; $($args:tt)+) => {
         if let Some(ref log) = $l {
@@ -60,6 +62,7 @@ macro_rules! try_info(
 );
 
 #[doc(hidden)]
+#[allow(unused_macros)]
 macro_rules! try_warn(
     ($l:expr, $($k:expr => $v:expr),+; $($args:tt)+) => {
         if let Some(ref log) = $l {
@@ -88,6 +91,7 @@ macro_rules! try_error(
 );
 
 #[doc(hidden)]
+#[allow(unused_macros)]
 macro_rules! try_crit(
     ($l:expr, $($k:expr => $v:expr),+; $($args:tt)+) => {
         if let Some(ref log) = $l {
@@ -101,6 +105,7 @@ macro_rules! try_crit(
     }
 );
 
+#[allow(unused_macros)]
 macro_rules! with_conn {
     ($tst:pat => $b:expr) => {{
         match Context::new() {
@@ -125,6 +130,7 @@ macro_rules! with_conn {
     }}
 }
 
+#[allow(unused_macros)]
 macro_rules! with_stmt {
     ($tst:pat => $b:expr; $stmt:expr) => {{
         match Context::new() {
