@@ -311,7 +311,12 @@ extern "C" {
 
 extern "C" {
     pub fn dpiLob_addRef(lob: *mut opaque::ODPILob) -> ::std::os::raw::c_int;
+    pub fn dpiLob_closeResource(lob: *mut opaque::ODPILob) -> ::std::os::raw::c_int;
+    pub fn dpiLob_copy(lob: *mut opaque::ODPILob,
+                       copiedLob: *mut *mut opaque::ODPILob)
+                       -> ::std::os::raw::c_int;
     pub fn dpiLob_getChunkSize(lob: *mut opaque::ODPILob, size: *mut u32) -> ::std::os::raw::c_int;
+    pub fn dpiLob_openResource(lob: *mut opaque::ODPILob) -> ::std::os::raw::c_int;
     pub fn dpiLob_release(lob: *mut opaque::ODPILob) -> ::std::os::raw::c_int;
 }
 

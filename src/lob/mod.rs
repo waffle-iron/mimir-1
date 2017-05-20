@@ -38,6 +38,22 @@ impl Lob {
                  ErrorKind::Lob("dpiLob_addRef".to_string()))
     }
 
+    /// Closes the LOB resource. This should be done when a batch of writes has been completed so
+    /// that the indexes associated with the LOB can be updated. It should only be performed if a
+    /// call to function `Lob::open_resource()` has been performed.
+    pub fn close_resource(&self) -> Result<()> {
+        try_dpi!(externs::dpiLob_closeResource(self.inner),
+                 Ok(()),
+                 ErrorKind::Lob("dpiLob_closeResource".to_string()))
+    }
+
+    /// Creates an independent copy of a LOB and returns a reference to the newly created LOB. This
+    /// reference should be released as soon as it is no longer needed.
+    pub fn copy(&self, dst: &mut Lob) -> Result<()> {
+        try_dpi!(externs::dpiLob_copy(self.inner, dst),
+                 Ok((), ErrorKind::Lob("dpiLob_copy".to_string()))
+    }
+
     /// Returns the chunk size of the internal LOB. Reading and writing to the LOB in multiples of
     /// this size will improve performance.
     pub fn get_chunk_size(&self) -> Result<u32> {
@@ -45,6 +61,17 @@ impl Lob {
         try_dpi!(externs::dpiLob_getChunkSize(self.inner, &mut size),
                  Ok(size),
                  ErrorKind::Lob("dpiLob_getChunkSize".to_string()))
+    }
+
+    /// Opens the LOB resource for writing. This will improve performance when writing to the LOB in
+    /// chunks and there are functional or extensible indexes associated with the LOB. If this
+    /// function is not called, the LOB resource will be opened and closed for each write that is
+    /// performed. A call to the function `Lob::close_resource()` should be done before performing a
+    /// call to the function `Connection::commit()`.
+    pub fn open_resource(&self) -> Result<()> {
+        try_dpi!(externs::dpiLob_openResource(self.inner),
+                 Ok(()),
+                 ErrorKind::Lob("dpiLob_openResource".to_string()))
     }
 
     /// Releases a reference to the LOB. A count of the references to the LOB is maintained and when
