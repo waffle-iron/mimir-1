@@ -7,6 +7,7 @@
 // modified, or distributed except according to those terms.
 
 //! ODPI-C Public Structs.
+use chrono::{DateTime, TimeZone, UTC};
 use odpi::{externs, flags, opaque};
 use std::os::raw::{c_char, c_int, c_void};
 use std::ptr;
@@ -693,7 +694,7 @@ pub struct ODPISubscrMessageTable {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default)]
 /// This structure is used for passing timestamp data to and from the database in the structure
 /// dpiData.
 pub struct ODPITimestamp {
@@ -717,6 +718,24 @@ pub struct ODPITimestamp {
     /// Specifies the minutes offset from UTC. This value is only used for timestamp with time zone
     /// and timestamp with local time zone columns.
     pub tz_minute_offset: i8,
+}
+
+impl From<ODPITimestamp> for DateTime<UTC> {
+    fn from(timestamp: ODPITimestamp) -> DateTime<UTC> {
+        let y = timestamp.year as i32;
+        let m = timestamp.month as u32;
+        let d = timestamp.day as u32;
+        let h = timestamp.hour as u32;
+        let mm = timestamp.minute as u32;
+        let s = timestamp.second as u32;
+        let fs = timestamp.fsecond * 1000;
+
+        if y == -10100 && m == 0 && d == 0 {
+            UTC::now()
+        } else {
+            UTC.ymd(y, m, d).and_hms_micro(h, mm, s, fs)
+        }
+    }
 }
 
 #[repr(C)]

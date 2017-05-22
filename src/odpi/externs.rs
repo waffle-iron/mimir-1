@@ -315,15 +315,70 @@ extern "C" {
     pub fn dpiLob_copy(lob: *mut opaque::ODPILob,
                        copiedLob: *mut *mut opaque::ODPILob)
                        -> ::std::os::raw::c_int;
+    pub fn dpiLob_flushBuffer(lob: *mut opaque::ODPILob) -> ::std::os::raw::c_int;
+    pub fn dpiLob_getBufferSize(lob: *mut opaque::ODPILob,
+                                sizeInChars: u64,
+                                sizeInBytes: *mut u64)
+                                -> ::std::os::raw::c_int;
     pub fn dpiLob_getChunkSize(lob: *mut opaque::ODPILob, size: *mut u32) -> ::std::os::raw::c_int;
+    pub fn dpiLob_getDirectoryAndFileName(lob: *mut opaque::ODPILob,
+                                          directoryAlias: *mut *const ::std::os::raw::c_char,
+                                          directoryAliasLength: *mut u32,
+                                          fileName: *mut *const ::std::os::raw::c_char,
+                                          fileNameLength: *mut u32)
+                                          -> ::std::os::raw::c_int;
+    pub fn dpiLob_getFileExists(lob: *mut opaque::ODPILob,
+                                exists: *mut ::std::os::raw::c_int)
+                                -> ::std::os::raw::c_int;
+    pub fn dpiLob_getIsResourceOpen(lob: *mut opaque::ODPILob,
+                                    isOpen: *mut ::std::os::raw::c_int)
+                                    -> ::std::os::raw::c_int;
+    pub fn dpiLob_getSize(lob: *mut opaque::ODPILob, size: *mut u64) -> ::std::os::raw::c_int;
     pub fn dpiLob_openResource(lob: *mut opaque::ODPILob) -> ::std::os::raw::c_int;
+    pub fn dpiLob_readBytes(lob: *mut opaque::ODPILob,
+                            offset: u64,
+                            amount: u64,
+                            value: *mut ::std::os::raw::c_char,
+                            valueLength: *mut u64)
+                            -> ::std::os::raw::c_int;
     pub fn dpiLob_release(lob: *mut opaque::ODPILob) -> ::std::os::raw::c_int;
+    pub fn dpiLob_setDirectoryAndFileName(lob: *mut opaque::ODPILob,
+                                          directoryAlias: *const ::std::os::raw::c_char,
+                                          directoryAliasLength: u32,
+                                          fileName: *const ::std::os::raw::c_char,
+                                          fileNameLength: u32)
+                                          -> ::std::os::raw::c_int;
+    pub fn dpiLob_setFromBytes(lob: *mut opaque::ODPILob,
+                               value: *const ::std::os::raw::c_char,
+                               valueLength: u64)
+                               -> ::std::os::raw::c_int;
+    pub fn dpiLob_trim(lob: *mut opaque::ODPILob, newSize: u64) -> ::std::os::raw::c_int;
+    pub fn dpiLob_writeBytes(lob: *mut opaque::ODPILob,
+                             offset: u64,
+                             value: *const ::std::os::raw::c_char,
+                             valueLength: u64)
+                             -> ::std::os::raw::c_int;
 }
 
 extern "C" {
+    pub fn dpiMsgProps_addRef(props: *mut opaque::ODPIMsgProps) -> ::std::os::raw::c_int;
+    pub fn dpiMsgProps_getNumAttempts(props: *mut opaque::ODPIMsgProps,
+                                      value: *mut i32)
+                                      -> ::std::os::raw::c_int;
+    pub fn dpiMsgProps_getCorrelation(props: *mut opaque::ODPIMsgProps,
+                                      value: *mut *const ::std::os::raw::c_char,
+                                      valueLength: *mut u32)
+                                      -> ::std::os::raw::c_int;
+    pub fn dpiMsgProps_getDelay(props: *mut opaque::ODPIMsgProps,
+                                value: *mut i32)
+                                -> ::std::os::raw::c_int;
     pub fn dpiMsgProps_getDeliveryMode(props: *mut opaque::ODPIMsgProps,
                                        value: *mut flags::ODPIMessageDeliveryMode)
                                        -> ::std::os::raw::c_int;
+    pub fn dpiMsgProps_getEnqTime(props: *mut opaque::ODPIMsgProps,
+                                  value: *mut structs::ODPITimestamp)
+                                  -> ::std::os::raw::c_int;
+    pub fn dpiMsgProps_release(props: *mut opaque::ODPIMsgProps) -> ::std::os::raw::c_int;
 }
 
 extern "C" {
