@@ -378,6 +378,20 @@ extern "C" {
     pub fn dpiMsgProps_getEnqTime(props: *mut opaque::ODPIMsgProps,
                                   value: *mut structs::ODPITimestamp)
                                   -> ::std::os::raw::c_int;
+    pub fn dpiMsgProps_getExceptionQ(props: *mut opaque::ODPIMsgProps,
+                                     value: *mut *const ::std::os::raw::c_char,
+                                     valueLength: *mut u32)
+                                     -> ::std::os::raw::c_int;
+    pub fn dpiMsgProps_getExpiration(props: *mut opaque::ODPIMsgProps,
+                                     value: *mut i32)
+                                     -> ::std::os::raw::c_int;
+    pub fn dpiMsgProps_getOriginalMsgId(props: *mut opaque::ODPIMsgProps,
+                                        value: *mut *const ::std::os::raw::c_char,
+                                        valueLength: *mut u32)
+                                        -> ::std::os::raw::c_int;
+    pub fn dpiMsgProps_getPriority(props: *mut opaque::ODPIMsgProps,
+                                   value: *mut i32)
+                                   -> ::std::os::raw::c_int;
     pub fn dpiMsgProps_release(props: *mut opaque::ODPIMsgProps) -> ::std::os::raw::c_int;
 }
 
@@ -442,6 +456,7 @@ extern "C" {
                                     -> ::std::os::raw::c_int;
     pub fn dpiPool_setTimeout(pool: *mut opaque::ODPIPool, value: u32) -> ::std::os::raw::c_int;
 }
+
 extern "C" {
     pub fn dpiStmt_addRef(stmt: *mut opaque::ODPIStmt) -> ::std::os::raw::c_int;
     pub fn dpiStmt_bindByName(stmt: *mut opaque::ODPIStmt,
