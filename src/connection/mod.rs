@@ -438,10 +438,7 @@ impl Connection {
             flags::ODPIOracleTypeNum::Clob |
             flags::ODPIOracleTypeNum::NClob |
             flags::ODPIOracleTypeNum::Blob => {}
-            _ => {
-                return Err(ErrorKind::Connection("invalid oracle type".to_string())
-                               .into())
-            }
+            _ => return Err(ErrorKind::Connection("invalid oracle type".to_string()).into()),
         }
 
         try_dpi!(externs::dpiConn_newTempLob(self.inner, lob_type, &mut lob_ptr),
