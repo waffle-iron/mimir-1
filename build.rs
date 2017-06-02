@@ -24,8 +24,10 @@ fn main() {
     let oci_inc_dir = match env::var("OCI_INC_DIR") {
         Ok(val) => val,
         Err(_) => {
-            println!("Set OCI_INC_DIR environment variable to point to the directory containing \
-            Oracle header files.");
+            println!(
+                "Set OCI_INC_DIR environment variable to point to the directory containing \
+            Oracle header files."
+            );
             std::process::exit(1);
         }
     };
@@ -37,8 +39,10 @@ fn main() {
     let oci_lib_dir = match env::var("OCI_LIB_DIR") {
         Ok(val) => val,
         Err(_) => {
-            println!("Set OCI_LIB_DIR environment variable to point to the directory containing \
-            Oracle libraries.");
+            println!(
+                "Set OCI_LIB_DIR environment variable to point to the directory containing \
+            Oracle libraries."
+            );
             std::process::exit(1);
         }
     };
