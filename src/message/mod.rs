@@ -144,6 +144,15 @@ impl Properties {
                  ErrorKind::MsgProps("dpiMsgProps_getPriority".to_string()))
     }
 
+    /// Returns the state of the message at the time of dequeue.
+    pub fn get_state(&self) -> Result<flags::ODPIMessageState> {
+        let mut state = flags::ODPIMessageState::Ready;
+
+        try_dpi!(externs::dpiMsgProps_getState(self.inner, &mut state),
+                 Ok(state),
+                 ErrorKind::MsgProps("dpiMsgProps_getState".to_string()))
+    }
+
     /// Releases a reference to the message properties. A count of the references to the message
     /// properties is maintained and when this count reaches zero, the memory associated with the
     /// properties is freed.
@@ -151,6 +160,70 @@ impl Properties {
         try_dpi!(externs::dpiMsgProps_release(self.inner),
                  Ok(()),
                  ErrorKind::MsgProps("dpiMsgProps_release".to_string()))
+    }
+
+    /// Sets the correlation of the message to be dequeued. Special pattern matching characters such
+    /// as the percent sign (%) and the underscore (_) can be used. If multiple messages satisfy the
+    /// pattern, the order of dequeuing is undetermined.
+    pub fn set_correlation(&self, correlation: &str) -> Result<()> {
+        let correlation_s = ODPIStr::from(correlation);
+
+        try_dpi!(externs::dpiMsgProps_setCorrelation(self.inner,
+                                                     correlation_s.ptr(),
+                                                     correlation_s.len()),
+                 Ok(()),
+                 ErrorKind::MsgProps("dpiMsgProps_setCorrelation".to_string()))
+    }
+
+    /// Sets the number of seconds to delay the message before it can be dequeued. Messages enqueued
+    /// with a delay are put into the `Waiting` state. When the delay expires the message is put
+    /// into the `Ready` state. Dequeuing directly by message id overrides this delay specification.
+    /// Note that delay processing requires the queue monitor to be started.
+    pub fn set_delay(&self, delay: i32) -> Result<()> {
+        try_dpi!(externs::dpiMsgProps_setDelay(self.inner, delay),
+                 Ok(()),
+                 ErrorKind::MsgProps("dpiMsgProps_setDelay".to_string()))
+    }
+
+    /// Sets the name of the queue to which the message is moved if it cannot be processed
+    /// successfully. Messages are moved if the number of unsuccessful dequeue attempts has reached
+    /// the maximum allowed number or if the message has expired. All messages in the exception
+    /// queue are in the `Expired` state.
+    pub fn set_exception_q(&self, queue_name: &str) -> Result<()> {
+        let queue_name_s = ODPIStr::from(queue_name);
+
+        try_dpi!(externs::dpiMsgProps_setExceptionQ(self.inner,
+                                                    queue_name_s.ptr(),
+                                                    queue_name_s.len()),
+                 Ok(()),
+                 ErrorKind::MsgProps("dpiMsgProps_setExceptionQ".to_string()))
+    }
+
+    /// Sets the number of seconds the message is available to be dequeued. This value is an offset
+    /// from the delay. Expiration processing requires the queue monitor to be running. Until this
+    /// time elapses, the messages are in the queue in the state `Ready`. After this time elapses
+    /// messages are moved to the exception queue in the `Expired` state.
+    pub fn set_expiration(&self, seconds: i32) -> Result<()> {
+        try_dpi!(externs::dpiMsgProps_setExpiration(self.inner, seconds),
+                 Ok(()),
+                 ErrorKind::MsgProps("dpiMsgProps_setExpiration".to_string()))
+    }
+
+    /// Sets the id of the message in the last queue that generated this message.
+    pub fn set_original_msg_id(&self, id: &str) -> Result<()> {
+        let id_s = ODPIStr::from(id);
+
+        try_dpi!(externs::dpiMsgProps_setOriginalMsgId(self.inner, id_s.ptr(), id_s.len()),
+                 Ok(()),
+                 ErrorKind::MsgProps("dpiMsgProps_setOriginalMsgId".to_string()))
+    }
+
+    /// Sets the priority assigned to the message. A smaller number indicates a higher priority. The
+    /// priority can be any number, including negative numbers.
+    pub fn set_priority(&self, priority: i32) -> Result<()> {
+        try_dpi!(externs::dpiMsgProps_setPriority(self.inner, priority),
+                 Ok(()),
+                 ErrorKind::MsgProps("dpiMsgProps_setPriority".to_string()))
     }
 }
 
@@ -168,6 +241,7 @@ mod test {
     use error::Result;
     use odpi::flags::ODPIConnCloseMode::*;
     use odpi::flags::ODPIMessageDeliveryMode::*;
+    use odpi::flags::ODPIMessageState::*;
     use std::ffi::CString;
     use test::CREDS;
 
@@ -192,10 +266,19 @@ mod test {
         msg_props.add_ref()?;
         let num_attempts = msg_props.get_num_attempts()?;
         assert_eq!(num_attempts, 0);
-        let correlation = msg_props.get_correlation()?;
+
+        let mut correlation = msg_props.get_correlation()?;
         assert_eq!(correlation, "");
-        let delay = msg_props.get_delay()?;
+        msg_props.set_correlation("ABC_")?;
+        correlation = msg_props.get_correlation()?;
+        assert_eq!(correlation, "ABC_");
+
+        let mut delay = msg_props.get_delay()?;
         assert_eq!(delay, 0);
+        msg_props.set_delay(5000)?;
+        delay = msg_props.get_delay()?;
+        assert_eq!(delay, 5000);
+
         let delivery_mode = msg_props.get_delivery_mode()?;
         assert_eq!(delivery_mode, NotSet);
         let enq_time = msg_props.get_enq_time()?;
@@ -204,14 +287,33 @@ mod test {
         assert_eq!(enq_time.month(), now.month());
         assert_eq!(enq_time.day(), now.day());
         assert_eq!(enq_time.hour(), now.hour());
-        let exception_q = msg_props.get_exception_q()?;
+
+        let mut exception_q = msg_props.get_exception_q()?;
         assert_eq!(exception_q, "");
-        let expiration = msg_props.get_expiration()?;
+        msg_props.set_exception_q("ex_q")?;
+        exception_q = msg_props.get_exception_q()?;
+        assert_eq!(exception_q, "ex_q");
+
+        let mut expiration = msg_props.get_expiration()?;
         assert_eq!(expiration, -1);
-        let orig_msg_id = msg_props.get_original_msg_id()?;
+        msg_props.set_expiration(360)?;
+        expiration = msg_props.get_expiration()?;
+        assert_eq!(expiration, 360);
+
+        let mut orig_msg_id = msg_props.get_original_msg_id()?;
         assert_eq!(orig_msg_id, "");
-        let priority = msg_props.get_priority()?;
+        msg_props.set_original_msg_id("orig_msg_id")?;
+        orig_msg_id = msg_props.get_original_msg_id()?;
+        assert_eq!(orig_msg_id, "orig_msg_id");
+
+        let mut priority = msg_props.get_priority()?;
         assert_eq!(priority, 0);
+        msg_props.set_priority(-1)?;
+        priority = msg_props.get_priority()?;
+        assert_eq!(priority, -1);
+
+        let state = msg_props.get_state()?;
+        assert_eq!(state, Ready);
 
         msg_props.release()?;
 

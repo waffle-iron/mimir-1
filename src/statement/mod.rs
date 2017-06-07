@@ -700,10 +700,8 @@ mod test {
         };
 
         for data in id_data.iter_mut() {
-            unsafe {
-                (*data).is_null = 0;
-                (*data).value.as_int_64 = rng.gen::<i64>().abs();
-            }
+            (*data).is_null = 0;
+            (*data).value.as_int_64 = rng.gen::<i64>().abs();
         }
 
         match stmt.bind_by_pos(1, &id_var) {

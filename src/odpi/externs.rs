@@ -392,7 +392,31 @@ extern "C" {
     pub fn dpiMsgProps_getPriority(props: *mut opaque::ODPIMsgProps,
                                    value: *mut i32)
                                    -> ::std::os::raw::c_int;
+    pub fn dpiMsgProps_getState(props: *mut opaque::ODPIMsgProps,
+                                value: *mut flags::ODPIMessageState)
+                                -> ::std::os::raw::c_int;
     pub fn dpiMsgProps_release(props: *mut opaque::ODPIMsgProps) -> ::std::os::raw::c_int;
+    pub fn dpiMsgProps_setCorrelation(props: *mut opaque::ODPIMsgProps,
+                                      value: *const ::std::os::raw::c_char,
+                                      valueLength: u32)
+                                      -> ::std::os::raw::c_int;
+    pub fn dpiMsgProps_setDelay(props: *mut opaque::ODPIMsgProps,
+                                value: i32)
+                                -> ::std::os::raw::c_int;
+    pub fn dpiMsgProps_setExceptionQ(props: *mut opaque::ODPIMsgProps,
+                                     value: *const ::std::os::raw::c_char,
+                                     valueLength: u32)
+                                     -> ::std::os::raw::c_int;
+    pub fn dpiMsgProps_setExpiration(props: *mut opaque::ODPIMsgProps,
+                                     value: i32)
+                                     -> ::std::os::raw::c_int;
+    pub fn dpiMsgProps_setOriginalMsgId(props: *mut opaque::ODPIMsgProps,
+                                        value: *const ::std::os::raw::c_char,
+                                        valueLength: u32)
+                                        -> ::std::os::raw::c_int;
+    pub fn dpiMsgProps_setPriority(props: *mut opaque::ODPIMsgProps,
+                                   value: i32)
+                                   -> ::std::os::raw::c_int;
 }
 
 extern "C" {

@@ -178,6 +178,20 @@ pub enum ODPIMessageDeliveryMode {
 
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+/// This enumeration identifies the possible states for messages in a queue.
+pub enum ODPIMessageState {
+    /// The message is ready to be processed.
+    Ready = 0,
+    /// The message is waiting for the delay time to expire.
+    Waiting = 1,
+    /// The message has already been processed and is retained.
+    Processed = 2,
+    /// The message has been moved to the exception queue.
+    Expired = 3,
+}
+
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 /// This enumeration identifies the type of data that is being transferred to and from the database.
 #[allow(dead_code)]
 pub enum ODPINativeTypeNum {
