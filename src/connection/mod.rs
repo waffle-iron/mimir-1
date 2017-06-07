@@ -1058,16 +1058,17 @@ mod test {
                     }
                     Err(_e) => return context_error_info(&ctxt),
                 };
-                let conn = match Connection::create(&ctxt,
-                                                    Some(&CREDS[0]),
-                                                    Some(&CREDS[1]),
-                                                    Some("//oic.cbsnae86d3iv.us-east-2.rds.\
+                let conn =
+                    match Connection::create(&ctxt,
+                                             Some(&CREDS[0]),
+                                             Some(&CREDS[1]),
+                                             Some("//oic.cbsnae86d3iv.us-east-2.rds.\
                                                     amazonaws.com/ORCL"),
-                                                    Some(ccp),
-                                                    None) {
-                    Ok(conn) => conn,
-                    Err(_e) => return context_error_info(&ctxt),
-                };
+                                             Some(ccp),
+                                             None) {
+                        Ok(conn) => conn,
+                        Err(_e) => return context_error_info(&ctxt),
+                    };
                 (ctxt, conn, scp)
             }
             Err(_e) => return assert!(false),
